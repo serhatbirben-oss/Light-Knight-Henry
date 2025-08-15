@@ -1,1 +1,1948 @@
 
+# -*- coding: utf-8 -*-
+import pygame
+import random
+import math
+import sys
+import os
+
+# =============================================================================
+# OYUN AYARLARI VE SABİTLER
+# =============================================================================
+pygame.init()
+pygame.mixer.init()
+
+# Ekran Boyutları
+EKRAN_GENISLIK = 2750
+EKRAN_YUKSEKLIK = 1750
+
+# Rekor dosyası
+REKOR_DOSYA = "rekor_skor.txt"
+
+# Müzik Ayarları
+MUSIC_FOLDER = "muzik"
+MUSIC_FILE = os.path.join(MUSIC_FOLDER, "background_music.mp3")
+MUSIC_VOLUME = 0.4
+
+# Ses Efekti Ayarları
+SOUND_FOLDER = "sesler"
+EXPLOSION_SOUND_FILE = os.path.join(SOUND_FOLDER, "explosion.mp3")
+EXPLOSION_SOUND_VOLUME = 0.7
+
+DAMAGE_SOUND_FILE = os.path.join(SOUND_FOLDER, "damage_sound.mp3")
+DAMAGE_SOUND_VOLUME = 0.6
+
+CLICK_SOUND_FILE = os.path.join(SOUND_FOLDER, "click_sound.mp3")
+CLICK_SOUND_VOLUME = 0.5
+
+# Ekleme: Game over sesi için yeni değişken
+GAME_OVER_SOUND_FILE = os.path.join(SOUND_FOLDER, "game_over.mp3")
+GAME_OVER_SOUND_VOLUME = 0.8
+
+
+# Renkler
+RENK_SIYAH = (0, 0, 0)
+RENK_BEYAZ = (255, 255, 255)
+RENK_SARI_ALTIN = (255, 215, 0)
+RENK_ACIK_SARI = (255, 255, 224)
+RENK_EJDER_YESIL = (34, 139, 34)
+RENK_KIRMIZI = (220, 20, 60)
+RENK_ATES_PORTAKAL = (255, 140, 0)
+RENK_ATES_SARI = (255, 255, 0)
+RENK_ELEKTRIK_MAVI = (0, 191, 255)
+RENK_YESIL = (0, 200, 0)
+RENK_GRI_ZIRH = (192, 192, 192)
+RENK_GRI_KOYU = (105, 105, 105)
+RENK_HAYALET = (220, 230, 255)
+RENK_HAYALET_KOYU = (119, 136, 153)
+RENK_GULLE = (40, 40, 40)
+RENK_TROL_YESIL = (85, 107, 47)
+RENK_TITAN_KAYA = (139, 115, 85)
+RENK_TITAN_GOZ = (255, 0, 255)
+RENK_KALKAN_MAVI = (0, 230, 230)
+RENK_GOZ = (227, 52, 47)
+RENK_GOZ_IRIS = (255, 204, 0)
+RENK_MAVI = (0, 0, 255)
+RENK_TURKUAZ_BARIKAT = (64, 224, 208)
+RENK_MOR_KAPAN = (128, 0, 128)
+RENK_GARGOYLE = (100, 100, 100)
+RENK_ULTI_ISIK = (255, 255, 150)
+RENK_KALP = (255, 20, 147)
+RENK_KILIC = (220, 220, 220)
+RENK_KRAL_SARI = (255, 215, 0)
+RENK_KEDI_TURUNCU = (255, 165, 0)
+RENK_BUZ_MAVI = (173, 216, 230)
+RENK_ISKELET = (255, 255, 255)
+RENK_ORK = (50, 205, 50)
+RENK_ELF = (0, 128, 0)
+RENK_ISKELET_GOLGE = (150, 150, 150)
+RENK_ORK_GOLGE = (34, 139, 34)
+RENK_ELF_GOLGE = (0, 100, 0)
+RENK_KÖYLÜ_KAHVERENGI = (139, 69, 19)
+RENK_KÖYLÜ_YEŞİL = (34, 139, 34)
+RENK_BÜYÜCÜ_MOR = (128, 0, 128)
+RENK_BÜYÜCÜ_LACIVERT = (25, 25, 112)
+RENK_THE_KINGS_ALTIN = (255, 215, 0)
+RENK_THE_KINGS_KIRMIZI = (255, 0, 0)
+RENK_NINJA_SIYAH = (10, 10, 10)
+RENK_NINJA_KIRMIZI = (200, 0, 0)
+RENK_VİKİNG_KAHVERENGI = (101, 67, 33)
+RENK_VİKİNG_KÜRKLERİ = (160, 82, 45)
+RENK_VİKİNG_METAL = (150, 150, 150)
+RENK_GLADYATÖR_KAHVE = (139, 69, 19)
+RENK_GLADYATÖR_ALTIN = (255, 215, 0)
+RENK_SANDIK_KAHVE = (139, 69, 19)
+RENK_SANDIK_KAPAK = (184, 134, 11)
+RENK_SANDIK_KILIT = (255, 215, 0)
+RENK_GUCLENDIRME_MAVI = (100, 149, 237)
+RENK_GUCLENDIRME_TURUNCU = (255, 165, 0)
+RENK_GUCLENDIRME_MOR = (147, 112, 219)
+RENK_GUCLENDIRME_YESIL = (124, 252, 0)
+
+
+
+# Oyun FPS
+FPS = 120
+
+# Oyuncu Ayarları
+OYUNCU_HIZ = 9
+OYUNCU_CAN = 100
+OYUNCU_ATES_GECIKMESI = 500
+CAN_DOLUM_ORANI = OYUNCU_CAN / 4
+
+# Mermi Ayarları
+MERMI_HIZ = 12
+
+# Düşman Ayarları
+DUSMAN_MAX_SAYISI = 40
+DUSMAN_SEVIYE_ATLAMA_SKORU = 2500
+
+# Güçlendirme Ayarları
+GUCUP_DUSME_ORANI = 0.02
+KALKAN_DUSME_ORANI = 0.005
+KALP_DUSME_ORANI = 0.001
+KILIC_DUSME_ORANI = 0.05
+GUCUP_SURE = 5000
+KILIC_SURESI = 10000
+
+# Sandık Ayarları
+SANDIK_ACMA_ARALIGI = 5000
+
+# Yetenek Ayarları
+YETENEK_SURESI = 7000
+YETENEK_BEKLEME_SURESI = 20000
+EJDER_BEKLEME_SURESI = 30000
+ULTI_BEKLEME_SURESI = 70000
+
+# Kalkan Ayarları
+KALKAN_CAN = 3
+KALKAN_HASARI = 500
+KALKAN_SURESI = 10000
+
+# Tuzak Ayarları
+KAPAN_HASARI = 1000
+KAPAN_BEKLEME_SURESI = 15000
+
+# Font Ayarları
+pygame.font.init()
+FONT_ADI = pygame.font.match_font('papyrus') or pygame.font.match_font('times new roman')
+FONT_BUYUK = pygame.font.Font(FONT_ADI, 80)
+FONT_ORTA = pygame.font.Font(FONT_ADI, 40)
+FONT_KUCUK = pygame.font.Font(FONT_ADI, 24)
+FONT_EKSTRA_KUCUK = pygame.font.Font(FONT_ADI, 18)
+
+# UI Ayarları
+BUTON_BOYUTU = 65
+BUTON_Y_KONUMU = EKRAN_YUKSEKLIK - BUTON_BOYUTU - 30
+BUTON_ARALIK = 20
+BUTON_BASLANGIC_X = EKRAN_GENISLIK - (BUTON_BOYUTU + BUTON_ARALIK) * 7
+
+ATES_TOHUMU_BUTON = pygame.Rect(BUTON_BASLANGIC_X, BUTON_Y_KONUMU, BUTON_BOYUTU, BUTON_BOYUTU)
+ELEKTRIK_BUTON = pygame.Rect(BUTON_BASLANGIC_X + (BUTON_BOYUTU + BUTON_ARALIK) * 1, BUTON_Y_KONUMU, BUTON_BOYUTU, BUTON_BOYUTU)
+GULLE_BUTON = pygame.Rect(BUTON_BASLANGIC_X + (BUTON_BOYUTU + BUTON_ARALIK) * 2, BUTON_Y_KONUMU, BUTON_BOYUTU, BUTON_BOYUTU)
+EJDER_BUTON = pygame.Rect(BUTON_BASLANGIC_X + (BUTON_BOYUTU + BUTON_ARALIK) * 3, BUTON_Y_KONUMU, BUTON_BOYUTU, BUTON_BOYUTU)
+KALKAN_BUTON = pygame.Rect(BUTON_BASLANGIC_X + (BUTON_BOYUTU + BUTON_ARALIK) * 4, BUTON_Y_KONUMU, BUTON_BOYUTU, BUTON_BOYUTU)
+KAPAN_BUTON = pygame.Rect(BUTON_BASLANGIC_X + (BUTON_BOYUTU + BUTON_ARALIK) * 5, BUTON_Y_KONUMU, BUTON_BOYUTU, BUTON_BOYUTU)
+ULTI_BUTON = pygame.Rect(BUTON_BASLANGIC_X + (BUTON_BOYUTU + BUTON_ARALIK) * 6, BUTON_Y_KONUMU, BUTON_BOYUTU, BUTON_BOYUTU)
+PAUSE_BUTON = pygame.Rect(EKRAN_GENISLIK - 220, 10, 200, 40)
+
+# PERFORMANS OPTİMİZASYONU: Resim ve Font önbelleği
+IMAGE_CACHE = {}
+FONT_CACHE = {}
+
+# =============================================================================
+# YARDIMCI FONKSİYONLAR
+# =============================================================================
+def metin_ciz(yuzey, metin, font, x, y, renk=RENK_BEYAZ):
+    cache_key = (metin, font, renk)
+    if cache_key in FONT_CACHE:
+        metin_yuzeyi, metin_rect = FONT_CACHE[cache_key]
+    else:
+        metin_yuzeyi = font.render(metin, True, renk)
+        FONT_CACHE[cache_key] = (metin_yuzeyi, metin_yuzeyi.get_rect())
+    
+    metin_rect = metin_yuzeyi.get_rect(center=(x, y))
+    yuzey.blit(metin_yuzeyi, metin_rect)
+
+def can_bari_ciz(yuzey, x, y, yuzde, bar_uzunluk=100, bar_yukseklik=10, renk=RENK_YESIL):
+    yuzde = max(0, min(100, yuzde))
+    dolum = (yuzde / 100) * bar_uzunluk
+    dis_rect = pygame.Rect(x, y, bar_uzunluk, bar_yukseklik)
+    ic_rect = pygame.Rect(x, y, dolum, bar_yukseklik)
+    pygame.draw.rect(yuzey, renk, ic_rect)
+    pygame.draw.rect(yuzey, RENK_BEYAZ, dis_rect, 2)
+
+def menu_goster(ekran, skor, rekor_skor):
+    s = pygame.Surface((EKRAN_GENISLIK, EKRAN_YUKSEKLIK), pygame.SRCALPHA)
+    s.fill((0,0,0,180))
+    ekran.blit(s, (0,0))
+
+    menu_genislik = 500
+    menu_yukseklik = 350
+    menu_x = EKRAN_GENISLIK/2 - menu_genislik/2
+    menu_y = EKRAN_YUKSEKLIK/2 - menu_yukseklik/2
+    menu_rect = pygame.Rect(menu_x, menu_y, menu_genislik, menu_yukseklik)
+    
+    pygame.draw.rect(ekran, RENK_GRI_KOYU, menu_rect, border_radius=20)
+    pygame.draw.rect(ekran, RENK_SARI_ALTIN, menu_rect, 5, border_radius=20)
+
+    metin_ciz(ekran, "DURAKLATILDI", FONT_ORTA, EKRAN_GENISLIK/2, menu_y + 40, RENK_BEYAZ)
+    metin_ciz(ekran, f"Skor: {skor}", FONT_KUCUK, EKRAN_GENISLIK/2, menu_y + 120, RENK_SARI_ALTIN)
+    metin_ciz(ekran, f"Rekor: {rekor_skor}", FONT_KUCUK, EKRAN_GENISLIK/2, menu_y + 160, RENK_BEYAZ)
+
+    devam_et_butonu = pygame.Rect(menu_x + 100, menu_y + 220, 300, 50)
+    ana_menu_butonu = pygame.Rect(menu_x + 100, menu_y + 290, 300, 50)
+    
+    pygame.draw.rect(ekran, RENK_YESIL, devam_et_butonu, border_radius=10)
+    pygame.draw.rect(ekran, RENK_KIRMIZI, ana_menu_butonu, border_radius=10)
+    
+    metin_ciz(ekran, "Devam Et", FONT_ORTA, devam_et_butonu.centerx, devam_et_butonu.centery)
+    metin_ciz(ekran, "Ana Menüye Dön", FONT_ORTA, ana_menu_butonu.centerx, ana_menu_butonu.centery)
+    
+    return devam_et_butonu, ana_menu_butonu
+
+# =============================================================================
+# Mermi, Efekt, Sandık ve Güçlendirme SINIFLARI
+# =============================================================================
+class TemelMermi(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+    
+    def update(self):
+        self.rect.y += self.hiz_y
+        if self.rect.bottom < 0:
+            self.kill()
+
+class IsikOku(TemelMermi):
+    def __init__(self, x, y, oyuncu_skin="IŞIK ŞÖVALYESİ", ekstra_hasar=0):
+        super().__init__(x, y)
+        self.hiz_y = -MERMI_HIZ
+        self.hasar = 1 + ekstra_hasar
+        
+        cache_key = f"isik_oku_{oyuncu_skin}"
+        if cache_key in IMAGE_CACHE:
+            self.image = IMAGE_CACHE[cache_key]
+        else:
+            if oyuncu_skin == "ATEŞ ŞÖVALYESİ":
+                self.image = pygame.Surface([24, 24], pygame.SRCALPHA)
+                pygame.draw.circle(self.image, RENK_ATES_PORTAKAL, (12, 12), 12)
+                pygame.draw.circle(self.image, RENK_ATES_SARI, (12, 12), 7)
+                self.hasar = 3
+                self.hiz_y = -MERMI_HIZ * 0.7
+            elif oyuncu_skin == "GÖLGE ŞÖVALYESİ":
+                self.image = pygame.Surface([40, 40], pygame.SRCALPHA)
+                pygame.draw.circle(self.image, RENK_GULLE, (20, 20), 20)
+                pygame.draw.circle(self.image, RENK_GRI_KOYU, (20, 20), 20, 3)
+                self.hasar = 10
+                self.hiz_y = -MERMI_HIZ * 0.5
+            elif oyuncu_skin == "KEDİ MUHAFIZ":
+                self.image = pygame.Surface([15, 30], pygame.SRCALPHA)
+                noktalar = [(7,0), (12,10), (5,12), (10,20), (7,30), (2,20), (9,18), (2,8)]
+                pygame.draw.lines(self.image, RENK_KEDI_TURUNCU, False, noktalar, 3)
+                pygame.draw.lines(self.image, RENK_BEYAZ, False, noktalar, 1)
+                self.hasar = 2
+                self.hiz_y = -MERMI_HIZ * 1.5
+            elif oyuncu_skin == "BUZ ŞÖVALYESİ":
+                self.image = pygame.Surface([20, 20], pygame.SRCALPHA)
+                pygame.draw.polygon(self.image, RENK_BUZ_MAVI, [(10,0), (20,20), (0,20)])
+                pygame.draw.polygon(self.image, RENK_BEYAZ, [(10,5), (15,15), (5,15)])
+                self.hasar = 2
+            elif oyuncu_skin == "KRAL ŞÖVALYE":
+                self.image = pygame.Surface([15, 30], pygame.SRCALPHA)
+                pygame.draw.rect(self.image, RENK_KRAL_SARI, (5, 0, 5, 30))
+                pygame.draw.circle(self.image, RENK_KRAL_SARI, (7, 5), 5)
+                self.hasar = 2
+                self.hiz_y = -MERMI_HIZ * 1.2
+            elif oyuncu_skin == "İSKELET":
+                self.image = pygame.Surface([15, 15], pygame.SRCALPHA)
+                pygame.draw.rect(self.image, RENK_ISKELET, (0, 0, 15, 15), border_radius=5)
+            elif oyuncu_skin == "ORK":
+                self.image = pygame.Surface([15, 20], pygame.SRCALPHA)
+                pygame.draw.polygon(self.image, RENK_ORK, [(7, 0), (15, 20), (0, 20)])
+            elif oyuncu_skin == "ELF ADAM":
+                self.image = pygame.Surface([10, 22], pygame.SRCALPHA)
+                ok_noktalari = [(5, 0), (10, 8), (6, 8), (6, 22), (4, 22), (4, 8), (0, 8)]
+                pygame.draw.polygon(self.image, RENK_ELF, ok_noktalari)
+            elif oyuncu_skin == "KÖYLÜ":
+                self.image = pygame.Surface([20, 40], pygame.SRCALPHA)
+                pygame.draw.rect(self.image, RENK_KÖYLÜ_KAHVERENGI, (8, 0, 4, 40))
+                pygame.draw.polygon(self.image, RENK_GRI_ZIRH, [(8, 0), (12, 0), (10, 10)])
+                self.hasar = 1.5
+                self.hiz_y = -MERMI_HIZ * 1.2
+            elif oyuncu_skin == "BÜYÜCÜ":
+                self.image = pygame.Surface([20, 20], pygame.SRCALPHA)
+                pygame.draw.circle(self.image, RENK_BÜYÜCÜ_MOR, (10, 10), 10)
+                pygame.draw.circle(self.image, RENK_BÜYÜCÜ_LACIVERT, (10, 10), 5)
+                self.hasar = 2.5
+                self.hiz_y = -MERMI_HIZ * 1.5
+            elif oyuncu_skin == "THE KINGS":
+                self.image = pygame.Surface([30, 30], pygame.SRCALPHA)
+                pygame.draw.circle(self.image, RENK_THE_KINGS_ALTIN, (15, 15), 15)
+                pygame.draw.circle(self.image, RENK_THE_KINGS_KIRMIZI, (15, 15), 10)
+                pygame.draw.circle(self.image, RENK_BEYAZ, (15, 15), 5)
+                self.hasar = 5
+                self.hiz_y = -MERMI_HIZ * 2
+            elif oyuncu_skin == "NINJA":
+                self.image = pygame.Surface([10, 30], pygame.SRCALPHA)
+                pygame.draw.polygon(self.image, RENK_NINJA_SIYAH, [(5,0), (10,10), (8,10), (8,30), (2,30), (2,10), (0,10)])
+                pygame.draw.line(self.image, RENK_NINJA_KIRMIZI, (5, 0), (5, 15), 2)
+                self.hasar = 1.8
+                self.hiz_y = -MERMI_HIZ * 1.8
+            elif oyuncu_skin == "VİKİNG":
+                self.image = pygame.Surface([25, 40], pygame.SRCALPHA)
+                pygame.draw.polygon(self.image, RENK_VİKİNG_METAL, [(12,0), (20,15), (15,15), (15,40), (10,40), (10,15), (5,15)])
+                self.hasar = 2.2
+                self.hiz_y = -MERMI_HIZ * 1.3
+            elif oyuncu_skin == "GLADYATÖR":
+                self.image = pygame.Surface([18, 35], pygame.SRCALPHA)
+                pygame.draw.rect(self.image, RENK_GLADYATÖR_KAHVE, (6, 0, 6, 35))
+                pygame.draw.polygon(self.image, RENK_GLADYATÖR_ALTIN, [(9,0), (18,10), (9,15), (0,10)])
+                self.hasar = 2
+                self.hiz_y = -MERMI_HIZ * 1.4
+
+            else: # Varsayılan: IŞIK ŞÖVALYESİ
+                self.image = pygame.Surface([10, 22], pygame.SRCALPHA)
+                ok_noktalari = [(5, 0), (10, 8), (6, 8), (6, 22), (4, 22), (4, 8), (0, 8)]
+                pygame.draw.polygon(self.image, RENK_SARI_ALTIN, ok_noktalari)
+                pygame.draw.polygon(self.image, RENK_ACIK_SARI, [(5,2), (8,8), (2,8)])
+            
+            IMAGE_CACHE[cache_key] = self.image
+
+        self.rect = self.image.get_rect(centerx=x, bottom=y)
+
+class AtesTohumu(TemelMermi):
+    def __init__(self, x, y):
+        super().__init__(x, y)
+        self.image = pygame.Surface([24, 24], pygame.SRCALPHA)
+        pygame.draw.circle(self.image, RENK_ATES_PORTAKAL, (12, 12), 12)
+        pygame.draw.circle(self.image, RENK_ATES_SARI, (12, 12), 7)
+        for _ in range(5):
+            pygame.draw.circle(self.image, RENK_ATES_SARI, (random.randint(4,20), random.randint(4,20)), random.randint(1,3))
+        self.hiz_y = -MERMI_HIZ * 0.7
+        self.hasar = 3
+        self.rect = self.image.get_rect(centerx=x, bottom=y)
+
+class Elektrik(TemelMermi):
+    def __init__(self, x, y):
+        super().__init__(x, y)
+        self.image = pygame.Surface([15, 30], pygame.SRCALPHA)
+        noktalar = [(7,0), (12,10), (5,12), (10,20), (7,30), (2,20), (9,18), (2,8)]
+        pygame.draw.lines(self.image, RENK_ELEKTRIK_MAVI, False, noktalar, 3)
+        pygame.draw.lines(self.image, RENK_BEYAZ, False, noktalar, 1)
+        self.hiz_y = -MERMI_HIZ * 1.5
+        self.hasar = 2
+        self.rect = self.image.get_rect(centerx=x, bottom=y)
+
+class Gulle(TemelMermi):
+    def __init__(self, x, y):
+        super().__init__(x, y)
+        self.image = pygame.Surface([40, 40], pygame.SRCALPHA)
+        pygame.draw.circle(self.image, RENK_GULLE, (20, 20), 20)
+        pygame.draw.circle(self.image, RENK_GRI_KOYU, (20, 20), 20, 3)
+        pygame.draw.arc(self.image, RENK_GRI_ZIRH, (10,5,20,15), math.radians(30), math.radians(200), 5)
+        self.hiz_y = -MERMI_HIZ * 0.5
+        self.hasar = 10
+        self.rect = self.image.get_rect(centerx=x, bottom=y)
+
+class EjderCagrisi(pygame.sprite.Sprite):
+    def __init__(self, center_x):
+        super().__init__()
+        boyut = 150
+        self.image = pygame.Surface([boyut, boyut], pygame.SRCALPHA)
+        pygame.draw.ellipse(self.image, RENK_EJDER_YESIL, (boyut * 0.35, boyut * 0.25, boyut * 0.3, boyut * 0.6))
+        pygame.draw.polygon(self.image, RENK_EJDER_YESIL, [(boyut * 0.45, boyut * 0.2), (boyut * 0.55, boyut * 0.2), (boyut * 0.5, boyut * 0.1)])
+        pygame.draw.line(self.image, RENK_GRI_KOYU, (boyut * 0.45, boyut * 0.15), (boyut * 0.4, boyut * 0.05), 3)
+        pygame.draw.line(self.image, RENK_GRI_KOYU, (boyut * 0.55, boyut * 0.15), (boyut * 0.6, boyut * 0.05), 3)
+        pygame.draw.polygon(self.image, RENK_EJDER_YESIL, [(boyut * 0.5, boyut * 0.3), (boyut * 0.8, boyut * 0.1), (boyut * 0.7, boyut * 0.5), (boyut * 0.9, boyut * 0.4), (boyut * 0.6, boyut * 0.6)])
+        pygame.draw.polygon(self.image, RENK_EJDER_YESIL, [(boyut * 0.5, boyut * 0.3), (boyut * 0.2, boyut * 0.1), (boyut * 0.3, boyut * 0.5), (boyut * 0.1, boyut * 0.4), (boyut * 0.4, boyut * 0.6)])
+        pygame.draw.line(self.image, (120, 180, 120), (boyut * 0.5, boyut * 0.3), (boyut * 0.7, boyut * 0.5), 2)
+        pygame.draw.line(self.image, (120, 180, 120), (boyut * 0.7, boyut * 0.5), (boyut * 0.9, boyut * 0.4), 2)
+        pygame.draw.line(self.image, (120, 180, 120), (boyut * 0.5, boyut * 0.3), (boyut * 0.3, boyut * 0.5), 2)
+        pygame.draw.line(self.image, (120, 180, 120), (boyut * 0.3, boyut * 0.5), (boyut * 0.1, boyut * 0.4), 2)
+        pygame.draw.line(self.image, RENK_GRI_KOYU, (boyut * 0.4, boyut * 0.8), (boyut * 0.35, boyut * 0.9), 3)
+        pygame.draw.line(self.image, RENK_GRI_KOYU, (boyut * 0.6, boyut * 0.8), (boyut * 0.65, boyut * 0.9), 3)
+        pygame.draw.circle(self.image, RENK_KIRMIZI, (boyut * 0.48, boyut * 0.25), 5)
+        pygame.draw.circle(self.image, RENK_KIRMIZI, (boyut * 0.52, boyut * 0.25), 5)
+        self.rect = self.image.get_rect(centerx=center_x, bottom=EKRAN_YUKSEKLIK)
+        self.hiz_y = -20
+        self.hasar = 100 # Ejderhanın hasarını burada tanımlıyoruz
+    def update(self):
+        self.rect.y += self.hiz_y
+        if self.rect.bottom < 0:
+            self.kill()
+
+class Barikat(pygame.sprite.Sprite):
+    def __init__(self, oyuncu_rect):
+        super().__init__()
+        self.hasar = KALKAN_HASARI
+        genislik = oyuncu_rect.width * 3.5
+        yukseklik = 30
+        self.image = pygame.Surface([genislik, yukseklik], pygame.SRCALPHA)
+        pygame.draw.rect(self.image, RENK_KALKAN_MAVI, (0, 5, genislik, yukseklik-10), border_radius=10)
+        pygame.draw.rect(self.image, RENK_TURKUAZ_BARIKAT, (5, 0, genislik-10, yukseklik), 3, border_radius=10)
+        pygame.draw.line(self.image, RENK_BEYAZ, (genislik/2, 0), (genislik/2, yukseklik), 3)
+        self.rect = self.image.get_rect()
+        self.rect.midbottom = (oyuncu_rect.centerx, oyuncu_rect.top - 10)
+        self.olusturma_zamani = pygame.time.get_ticks()
+        self.can = KALKAN_CAN
+        self.max_can = KALKAN_CAN
+    
+    def hasar_al(self, hasar_kaynagi):
+        if isinstance(hasar_kaynagi, GozMermisi):
+            self.can -= 0.25
+        else:
+            self.can -= 1
+        if self.can <= 0:
+            self.kill()
+            return True
+        return False
+
+    def update(self):
+        if pygame.time.get_ticks() - self.olusturma_zamani > KALKAN_SURESI:
+            self.kill()
+        
+        yuzde = self.can / self.max_can
+        self.image.set_alpha(int(yuzde * 255))
+        
+class Kapan(pygame.sprite.Sprite):
+    def __init__(self, oyuncu_rect):
+        super().__init__()
+        self.hasar = KAPAN_HASARI
+        boyut = 60
+        self.image = pygame.Surface([boyut, boyut], pygame.SRCALPHA)
+        dis_kalinlik = 5
+        dis_uzunluk = 10
+        dis_aralik = 10
+        pygame.draw.circle(self.image, RENK_GRI_KOYU, (boyut//2, boyut//2), boyut//2, dis_kalinlik)
+        for i in range(10):
+            aci = i * (360 / 10)
+            x1 = boyut//2 + (boyut//2 - dis_kalinlik) * math.cos(math.radians(aci))
+            y1 = boyut//2 + (boyut//2 - dis_kalinlik) * math.sin(math.radians(aci))
+            x2 = boyut//2 + (boyut//2 - dis_kalinlik - dis_uzunluk) * math.cos(math.radians(aci + dis_aralik))
+            y2 = boyut//2 + (boyut//2 - dis_kalinlik - dis_uzunluk) * math.sin(math.radians(aci + dis_aralik))
+            pygame.draw.line(self.image, RENK_GRI_ZIRH, (x1, y1), (x2, y2), 3)
+        pygame.draw.circle(self.image, RENK_MOR_KAPAN, (boyut//2, boyut//2), 10)
+        self.rect = self.image.get_rect(midbottom = oyuncu_rect.midbottom)
+        self.radius = boyut // 2
+    def update(self):
+        pass
+
+class Patlama(pygame.sprite.Sprite):
+    def __init__(self, merkez, boyut_carpani=1):
+        super().__init__()
+        self.merkez = merkez
+        self.frame = 0
+        self.animasyon_hizi = 40
+        self.son_guncelleme = pygame.time.get_ticks()
+        self.animasyon_resimleri = []
+        for i in range(10):
+            boyut = int((10 + i * 5) * boyut_carpani)
+            img = pygame.Surface([boyut * 2, boyut * 2], pygame.SRCALPHA)
+            pygame.draw.circle(img, RENK_ACIK_SARI, (boyut, boyut), boyut)
+            self.animasyon_resimleri.append(img)
+        self.image = self.animasyon_resimleri[0]
+        self.rect = self.image.get_rect(center=self.merkez)
+    def update(self):
+        if pygame.time.get_ticks() - self.son_guncelleme > self.animasyon_hizi:
+            self.son_guncelleme = pygame.time.get_ticks()
+            self.frame += 1
+            if self.frame >= len(self.animasyon_resimleri):
+                self.kill()
+            else:
+                self.image = self.animasyon_resimleri[self.frame]
+                self.rect = self.image.get_rect(center=self.merkez)
+
+class IşıkÇağlayanı(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.hasar = 100
+        self.image = pygame.Surface([EKRAN_GENISLIK, EKRAN_YUKSEKLIK], pygame.SRCALPHA)
+        self.image.fill(RENK_ULTI_ISIK)
+        self.rect = self.image.get_rect(topleft=(0,0))
+        self.olusturma_zamani = pygame.time.get_ticks()
+        self.suresi = 1000
+    def update(self):
+        gecen_zaman = pygame.time.get_ticks() - self.olusturma_zamani
+        if gecen_zaman > self.suresi:
+            self.kill()
+        else:
+            self.image.set_alpha(255 - (255 * gecen_zaman / self.suresi))
+
+class Sandik(pygame.sprite.Sprite):
+    def __init__(self, merkez):
+        super().__init__()
+        self.image = pygame.Surface([80, 80], pygame.SRCALPHA)
+        pygame.draw.rect(self.image, RENK_SANDIK_KAHVE, (10, 20, 60, 50))
+        pygame.draw.rect(self.image, RENK_SANDIK_KAPAK, (5, 15, 70, 10))
+        pygame.draw.rect(self.image, RENK_SANDIK_KILIT, (35, 40, 10, 10))
+        self.rect = self.image.get_rect(center=merkez)
+
+class GuclendirmeButonu(pygame.sprite.Sprite):
+    def __init__(self, x, y, metin, aciklama, tip):
+        super().__init__()
+        self.metin = metin
+        self.aciklama = aciklama
+        self.tip = tip
+        self.image = pygame.Surface([300, 100], pygame.SRCALPHA)
+        self.renk = self.renk_belirle()
+        pygame.draw.rect(self.image, self.renk, (0, 0, 300, 100), border_radius=15)
+        self.rect = self.image.get_rect(center=(x, y))
+        
+    def renk_belirle(self):
+        if self.tip == "MAX_CAN":
+            return RENK_KALP
+        elif self.tip == "HIZ":
+            return RENK_GUCLENDIRME_MAVI
+        elif self.tip == "ATES_HIZI":
+            return RENK_GUCLENDIRME_TURUNCU
+        elif self.tip == "EKSTRA_HASAR":
+            return RENK_KIRMIZI
+        elif self.tip == "DUSMAN_YAVASLATMA":
+            return RENK_BUZ_MAVI
+        elif self.tip == "YETENEK_CD":
+            return RENK_GUCLENDIRME_MOR
+        elif self.tip == "SKOR_CARPANI":
+            return RENK_GUCLENDIRME_YESIL
+        return (random.randint(100, 255), random.randint(100, 255), random.randint(100, 255))
+        
+    def ciz(self, ekran):
+        pygame.draw.rect(ekran, self.renk, self.rect, border_radius=15)
+        metin_ciz(ekran, self.metin, FONT_KUCUK, self.rect.centerx, self.rect.centery - 15)
+        metin_ciz(ekran, self.aciklama, FONT_EKSTRA_KUCUK, self.rect.centerx, self.rect.centery + 15, RENK_SIYAH)
+
+# =============================================================================
+# Ana Karakterler (Oyuncu, Düşman)
+# =============================================================================
+class Varlik(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.flash_suresi = 100
+        self.son_flash = -self.flash_suresi - 1
+        self.yavaslatma_aktif = False
+        self.yavaslatma_bitis_zamani = 0
+        self.hiz_orjinal = 0
+    
+    def darbe_efekti(self):
+        self.son_flash = pygame.time.get_ticks()
+
+    def update_efekt(self):
+        if hasattr(self, 'image_orjinal') and hasattr(self, 'image'):
+            simdiki_zaman = pygame.time.get_ticks()
+            if simdiki_zaman - self.son_flash < self.flash_suresi:
+                base_image = getattr(self, 'image_orjinal_donuk', self.image_orjinal)
+                self.image = base_image.copy()
+                self.image.fill(RENK_BEYAZ, special_flags=pygame.BLEND_RGB_ADD)
+            else:
+                self.image = getattr(self, 'image_orjinal_donuk', self.image_orjinal)
+
+    def vurul(self, hasar):
+        self.can -= hasar
+        self.darbe_efekti()
+        return self.can <= 0
+
+    def yavasla(self, sure):
+        if not self.yavaslatma_aktif:
+            self.yavaslatma_aktif = True
+            self.yavaslatma_bitis_zamani = pygame.time.get_ticks() + sure
+            self.hiz_orjinal_y = self.hiz_y
+            self.hiz_y *= 0.5
+            if hasattr(self, 'hiz_x'):
+                self.hiz_orjinal_x = self.hiz_x
+                self.hiz_x *= 0.5
+
+    def yavaslatma_kontrol(self):
+        if self.yavaslatma_aktif and pygame.time.get_ticks() > self.yavaslatma_bitis_zamani:
+            self.yavaslatma_aktif = False
+            self.hiz_y = self.hiz_orjinal_y
+            if hasattr(self, 'hiz_x'):
+                self.hiz_x = self.hiz_orjinal_x
+
+class Oyuncu(Varlik):
+    def __init__(self):
+        super().__init__()
+        self.skin_adi = "IŞIK ŞÖVALYESİ"
+        self.max_can = OYUNCU_CAN
+        self.skin_sec(self.skin_adi)
+        self.radius = 25
+        self.hiz_x = OYUNCU_HIZ
+        self.can = self.max_can
+        self.son_ates = pygame.time.get_ticks()
+        self.ates_gecikmesi = OYUNCU_ATES_GECIKMESI
+        self.gucup_bitis_zamani = pygame.time.get_ticks()
+        self.guc_aktif = False
+        self.yetenek_aktif = "YOK"
+        self.yetenek_bitis_zamani = 0
+        self.ates_tohumu_cd_bitis = 0
+        self.elektrik_cd_bitis = 0
+        self.gulle_cd_bitis = 0
+        self.ejder_cd_bitis = 0
+        self.kalkan_cd_bitis = 0
+        self.kapan_cd_bitis = 0
+        self.ulti_cd_bitis = 0
+        self.kilic_aktif = False
+        self.kilic_bitis_zamani = 0
+        self._kilic_durumu_gecerli = False
+        self.ekstra_hasar = 0
+        self.yetenek_cd_azaltma = 0
+        self.skor_carpani_aktif = False
+        self.skor_carpani_sure = 0
+        self.skor_carpani_baslangic_zamani = 0
+
+    def skin_sec(self, skin_adi):
+        self.skin_adi = skin_adi
+        
+        cache_key = f"oyuncu_{skin_adi}"
+        if cache_key in IMAGE_CACHE:
+            self.image_orjinal = IMAGE_CACHE[cache_key]
+        else:
+            self.image_orjinal = pygame.Surface([50, 60], pygame.SRCALPHA)
+            if skin_adi == "ATEŞ ŞÖVALYESİ":
+                pygame.draw.rect(self.image_orjinal, RENK_ATES_PORTAKAL, (10, 20, 30, 30))
+                pygame.draw.rect(self.image_orjinal, RENK_ATES_SARI, (10, 20, 30, 30), 2)
+                pygame.draw.polygon(self.image_orjinal, RENK_ATES_PORTAKAL, [(15, 22), (35, 22), (40, 15), (25, 5), (10, 15)])
+                pygame.draw.rect(self.image_orjinal, RENK_SIYAH, (18, 15, 14, 5))
+                pygame.draw.polygon(self.image_orjinal, RENK_ATES_SARI, [(25, 5), (22, 0), (28, 0)])
+                pygame.draw.circle(self.image_orjinal, RENK_ATES_SARI, (10, 25), 8)
+                pygame.draw.circle(self.image_orjinal, RENK_ATES_SARI, (40, 25), 8)
+                pygame.draw.arc(self.image_orjinal, RENK_SIYAH, (20, 20, 50, 40), math.radians(110), math.radians(250), 4)
+                pygame.draw.line(self.image_orjinal, RENK_ATES_SARI, (35, 25), (45, 40), 3)
+            elif skin_adi == "GÖLGE ŞÖVALYESİ":
+                pygame.draw.rect(self.image_orjinal, RENK_GRI_KOYU, (10, 20, 30, 30))
+                pygame.draw.rect(self.image_orjinal, RENK_SIYAH, (10, 20, 30, 30), 2)
+                pygame.draw.polygon(self.image_orjinal, RENK_GRI_KOYU, [(15, 22), (35, 22), (40, 15), (25, 5), (10, 15)])
+                pygame.draw.rect(self.image_orjinal, RENK_GRI_ZIRH, (18, 15, 14, 5))
+                pygame.draw.polygon(self.image_orjinal, RENK_SIYAH, [(25, 5), (22, 0), (28, 0)])
+                pygame.draw.circle(self.image_orjinal, RENK_GRI_ZIRH, (10, 25), 8)
+                pygame.draw.circle(self.image_orjinal, RENK_GRI_ZIRH, (40, 25), 8)
+                pygame.draw.arc(self.image_orjinal, RENK_GRI_KOYU, (20, 20, 50, 40), math.radians(110), math.radians(250), 4)
+                pygame.draw.line(self.image_orjinal, RENK_GRI_ZIRH, (35, 25), (45, 40), 3)
+            elif skin_adi == "KEDİ MUHAFIZ":
+                pygame.draw.rect(self.image_orjinal, RENK_KEDI_TURUNCU, (10, 20, 30, 30))
+                pygame.draw.rect(self.image_orjinal, RENK_BEYAZ, (10, 20, 30, 30), 2)
+                pygame.draw.polygon(self.image_orjinal, RENK_KEDI_TURUNCU, [(15, 22), (35, 22), (40, 15), (25, 5), (10, 15)])
+                pygame.draw.polygon(self.image_orjinal, RENK_BEYAZ, [(10, 15), (15, 5), (25, 15)])
+                pygame.draw.polygon(self.image_orjinal, RENK_BEYAZ, [(40, 15), (35, 5), (25, 15)])
+                pygame.draw.rect(self.image_orjinal, RENK_BEYAZ, (18, 15, 14, 5))
+                pygame.draw.circle(self.image_orjinal, RENK_BEYAZ, (10, 25), 8)
+                pygame.draw.circle(self.image_orjinal, RENK_BEYAZ, (40, 25), 8)
+                pygame.draw.line(self.image_orjinal, RENK_BEYAZ, (20, 30), (30, 30), 2)
+                pygame.draw.line(self.image_orjinal, RENK_BEYAZ, (25, 30), (25, 35), 2)
+            elif skin_adi == "BUZ ŞÖVALYESİ":
+                pygame.draw.rect(self.image_orjinal, RENK_BUZ_MAVI, (10, 20, 30, 30))
+                pygame.draw.rect(self.image_orjinal, RENK_BEYAZ, (10, 20, 30, 30), 2)
+                pygame.draw.polygon(self.image_orjinal, RENK_BUZ_MAVI, [(15, 22), (35, 22), (40, 15), (25, 5), (10, 15)])
+                pygame.draw.polygon(self.image_orjinal, RENK_BEYAZ, [(25, 5), (22, 0), (28, 0)])
+                pygame.draw.rect(self.image_orjinal, RENK_SIYAH, (18, 15, 14, 5))
+                pygame.draw.circle(self.image_orjinal, RENK_BEYAZ, (10, 25), 8)
+                pygame.draw.circle(self.image_orjinal, RENK_BEYAZ, (40, 25), 8)
+                pygame.draw.line(self.image_orjinal, RENK_BUZ_MAVI, (10, 25), (10, 45), 3)
+                pygame.draw.line(self.image_orjinal, RENK_BUZ_MAVI, (40, 25), (40, 45), 3)
+            elif skin_adi == "KRAL ŞÖVALYE":
+                pygame.draw.rect(self.image_orjinal, RENK_SARI_ALTIN, (10, 20, 30, 30))
+                pygame.draw.rect(self.image_orjinal, RENK_BEYAZ, (10, 20, 30, 30), 2)
+                pygame.draw.polygon(self.image_orjinal, RENK_SARI_ALTIN, [(15, 22), (35, 22), (40, 15), (25, 5), (10, 15)])
+                pygame.draw.polygon(self.image_orjinal, RENK_KRAL_SARI, [(25, 5), (22, 0), (28, 0)])
+                pygame.draw.circle(self.image_orjinal, RENK_BEYAZ, (10, 25), 8)
+                pygame.draw.circle(self.image_orjinal, RENK_BEYAZ, (40, 25), 8)
+                pygame.draw.line(self.image_orjinal, RENK_BEYAZ, (15, 30), (35, 30), 3)
+                pygame.draw.line(self.image_orjinal, RENK_BEYAZ, (25, 30), (25, 40), 3)
+            elif skin_adi == "İSKELET":
+                pygame.draw.rect(self.image_orjinal, RENK_ISKELET, (10, 20, 30, 30), border_radius=5)
+                pygame.draw.rect(self.image_orjinal, RENK_ISKELET_GOLGE, (10, 20, 30, 30), 2, border_radius=5)
+                pygame.draw.circle(self.image_orjinal, RENK_SIYAH, (20, 28), 3)
+                pygame.draw.circle(self.image_orjinal, RENK_SIYAH, (30, 28), 3)
+                pygame.draw.line(self.image_orjinal, RENK_SIYAH, (15, 35), (35, 35), 2)
+                pygame.draw.line(self.image_orjinal, RENK_ISKELET, (15, 40), (35, 40), 3)
+                pygame.draw.line(self.image_orjinal, RENK_ISKELET, (15, 50), (35, 50), 3)
+                pygame.draw.line(self.image_orjinal, RENK_ISKELET, (25, 50), (25, 60), 3)
+            elif skin_adi == "ORK":
+                pygame.draw.rect(self.image_orjinal, RENK_ORK, (10, 20, 30, 30), border_radius=5)
+                pygame.draw.rect(self.image_orjinal, RENK_ORK_GOLGE, (10, 20, 30, 30), 2, border_radius=5)
+                pygame.draw.polygon(self.image_orjinal, RENK_ORK, [(10, 25), (0, 20), (5, 30)])
+                pygame.draw.polygon(self.image_orjinal, RENK_ORK, [(40, 25), (50, 20), (45, 30)])
+                pygame.draw.circle(self.image_orjinal, RENK_SIYAH, (20, 28), 4)
+                pygame.draw.circle(self.image_orjinal, RENK_SIYAH, (30, 28), 4)
+                pygame.draw.line(self.image_orjinal, RENK_SIYAH, (15, 40), (35, 40), 2)
+                pygame.draw.line(self.image_orjinal, RENK_BEYAZ, (20, 42), (22, 44), 2)
+                pygame.draw.line(self.image_orjinal, RENK_BEYAZ, (28, 42), (30, 44), 2)
+            elif skin_adi == "ELF ADAM":
+                pygame.draw.rect(self.image_orjinal, RENK_BEYAZ, (10, 20, 30, 30), border_radius=5)
+                pygame.draw.rect(self.image_orjinal, RENK_GRI_ZIRH, (10, 20, 30, 30), 2, border_radius=5)
+                pygame.draw.polygon(self.image_orjinal, RENK_ELF, [(10, 25), (5, 10), (15, 20)])
+                pygame.draw.polygon(self.image_orjinal, RENK_ELF, [(40, 25), (45, 10), (35, 20)])
+                pygame.draw.circle(self.image_orjinal, RENK_BEYAZ, (25, 15), 10)
+                pygame.draw.circle(self.image_orjinal, RENK_SIYAH, (20, 28), 3)
+                pygame.draw.circle(self.image_orjinal, RENK_SIYAH, (30, 28), 3)
+                pygame.draw.line(self.image_orjinal, RENK_SIYAH, (20, 35), (30, 35), 2)
+            elif skin_adi == "KÖYLÜ":
+                pygame.draw.rect(self.image_orjinal, RENK_KÖYLÜ_KAHVERENGI, (10, 20, 30, 30), border_radius=5)
+                pygame.draw.rect(self.image_orjinal, RENK_KÖYLÜ_YEŞİL, (10, 20, 30, 10))
+                pygame.draw.rect(self.image_orjinal, RENK_GRI_KOYU, (15, 15, 20, 10), border_radius=5)
+                pygame.draw.circle(self.image_orjinal, RENK_SIYAH, (20, 30), 2)
+                pygame.draw.circle(self.image_orjinal, RENK_SIYAH, (30, 30), 2)
+            elif skin_adi == "BÜYÜCÜ":
+                pygame.draw.rect(self.image_orjinal, RENK_BÜYÜCÜ_MOR, (10, 20, 30, 30), border_radius=5)
+                pygame.draw.polygon(self.image_orjinal, RENK_BÜYÜCÜ_MOR, [(15, 22), (35, 22), (40, 15), (25, 5), (10, 15)])
+                pygame.draw.polygon(self.image_orjinal, RENK_BÜYÜCÜ_LACIVERT, [(25, 5), (22, 0), (28, 0)])
+                pygame.draw.circle(self.image_orjinal, RENK_SIYAH, (20, 30), 2)
+                pygame.draw.circle(self.image_orjinal, RENK_SIYAH, (30, 30), 2)
+                pygame.draw.line(self.image_orjinal, RENK_BEYAZ, (25, 40), (25, 50), 3)
+            elif skin_adi == "THE KINGS":
+                pygame.draw.rect(self.image_orjinal, RENK_THE_KINGS_ALTIN, (10, 20, 30, 30), border_radius=5)
+                pygame.draw.rect(self.image_orjinal, RENK_THE_KINGS_KIRMIZI, (10, 20, 30, 30), 2, border_radius=5)
+                pygame.draw.polygon(self.image_orjinal, RENK_THE_KINGS_ALTIN, [(15, 22), (35, 22), (40, 15), (25, 5), (10, 15)])
+                pygame.draw.polygon(self.image_orjinal, RENK_THE_KINGS_ALTIN, [(25, 5), (22, 0), (28, 0)])
+                pygame.draw.line(self.image_orjinal, RENK_BEYAZ, (20, 30), (30, 30), 2)
+                pygame.draw.line(self.image_orjinal, RENK_BEYAZ, (25, 30), (25, 40), 2)
+            elif skin_adi == "NINJA":
+                pygame.draw.rect(self.image_orjinal, RENK_NINJA_KIRMIZI, (10, 20, 30, 30))
+                pygame.draw.rect(self.image_orjinal, RENK_BEYAZ, (10, 20, 30, 30), 2)
+                pygame.draw.polygon(self.image_orjinal, RENK_NINJA_KIRMIZI, [(15, 22), (35, 22), (40, 15), (25, 5), (10, 15)])
+                pygame.draw.rect(self.image_orjinal, RENK_BEYAZ, (18, 15, 14, 5))
+                pygame.draw.polygon(self.image_orjinal, RENK_NINJA_KIRMIZI, [(25, 5), (22, 0), (28, 0)])
+                pygame.draw.circle(self.image_orjinal, RENK_NINJA_KIRMIZI, (10, 25), 8, 2)
+                pygame.draw.circle(self.image_orjinal, RENK_NINJA_KIRMIZI, (40, 25), 8, 2)
+            elif skin_adi == "VİKİNG":
+                pygame.draw.rect(self.image_orjinal, RENK_VİKİNG_KAHVERENGI, (10, 20, 30, 30))
+                pygame.draw.rect(self.image_orjinal, RENK_VİKİNG_KÜRKLERİ, (10, 20, 30, 30), 2)
+                pygame.draw.polygon(self.image_orjinal, RENK_VİKİNG_METAL, [(15, 22), (35, 22), (40, 15), (25, 5), (10, 15)])
+                pygame.draw.rect(self.image_orjinal, RENK_SIYAH, (18, 15, 14, 5))
+                pygame.draw.polygon(self.image_orjinal, RENK_VİKİNG_METAL, [(25, 5), (22, 0), (28, 0)])
+                pygame.draw.polygon(self.image_orjinal, RENK_VİKİNG_METAL, [(10, 25), (5, 20), (0, 25), (5, 30)])
+                pygame.draw.polygon(self.image_orjinal, RENK_VİKİNG_METAL, [(40, 25), (45, 20), (50, 25), (45, 30)])
+                pygame.draw.line(self.image_orjinal, RENK_SIYAH, (25, 35), (25, 45), 2)
+            elif skin_adi == "GLADYATÖR":
+                pygame.draw.rect(self.image_orjinal, RENK_GLADYATÖR_KAHVE, (10, 20, 30, 30))
+                pygame.draw.rect(self.image_orjinal, RENK_GLADYATÖR_ALTIN, (10, 20, 30, 30), 2)
+                pygame.draw.polygon(self.image_orjinal, RENK_GLADYATÖR_KAHVE, [(15, 22), (35, 22), (40, 15), (25, 5), (10, 15)])
+                pygame.draw.rect(self.image_orjinal, RENK_GLADYATÖR_ALTIN, (18, 15, 14, 5))
+                pygame.draw.polygon(self.image_orjinal, RENK_GLADYATÖR_ALTIN, [(25, 5), (22, 0), (28, 0)])
+                pygame.draw.circle(self.image_orjinal, RENK_SIYAH, (20, 28), 3)
+                pygame.draw.circle(self.image_orjinal, RENK_SIYAH, (30, 28), 3)
+                pygame.draw.line(self.image_orjinal, RENK_GLADYATÖR_ALTIN, (15, 40), (35, 40), 2)
+
+            else: # Varsayılan: IŞIK ŞÖVALYESİ
+                pygame.draw.rect(self.image_orjinal, RENK_GRI_ZIRH, (10, 20, 30, 30))
+                pygame.draw.rect(self.image_orjinal, RENK_SARI_ALTIN, (10, 20, 30, 30), 2)
+                pygame.draw.polygon(self.image_orjinal, RENK_GRI_ZIRH, [(15, 22), (35, 22), (40, 15), (25, 5), (10, 15)])
+                pygame.draw.rect(self.image_orjinal, RENK_SIYAH, (18, 15, 14, 5))
+                pygame.draw.polygon(self.image_orjinal, RENK_SARI_ALTIN, [(25, 5), (22, 0), (28, 0)])
+                pygame.draw.circle(self.image_orjinal, RENK_GRI_KOYU, (10, 25), 8)
+                pygame.draw.circle(self.image_orjinal, RENK_GRI_KOYU, (40, 25), 8)
+                pygame.draw.circle(self.image_orjinal, RENK_SARI_ALTIN, (10, 25), 8, 2)
+                pygame.draw.circle(self.image_orjinal, RENK_SARI_ALTIN, (40, 25), 8, 2)
+                pygame.draw.arc(self.image_orjinal, RENK_GRI_KOYU, (20, 20, 50, 40), math.radians(110), math.radians(250), 4)
+                pygame.draw.line(self.image_orjinal, RENK_ACIK_SARI, (35, 25), (45, 40), 3)
+            
+            IMAGE_CACHE[cache_key] = self.image_orjinal
+            
+        self.image = self.image_orjinal
+        self.rect = self.image.get_rect(centerx=EKRAN_GENISLIK / 2, bottom=EKRAN_YUKSEKLIK - 10)
+        self.image_orjinal_donuk = self.image_orjinal
+    
+    def guc_al(self):
+        self.guc_aktif = True
+        self.gucup_bitis_zamani = pygame.time.get_ticks() + GUCUP_SURE
+    
+    def kilic_al(self):
+        self.kilic_aktif = True
+        self.kilic_bitis_zamani = pygame.time.get_ticks() + KILIC_SURESI
+    
+    def skor_carpani_al(self):
+        self.skor_carpani_aktif = True
+        self.skor_carpani_baslangic_zamani = pygame.time.get_ticks()
+        self.skor_carpani_sure = 20000
+    
+    def can_yenile(self, miktar):
+        self.can = min(self.max_can, self.can + miktar)
+    
+    def yetenek_kullan(self, yetenek_turu):
+        simdiki_zaman = pygame.time.get_ticks()
+        yeni_nesneler = []
+        
+        if self.yetenek_aktif != "YOK" and yetenek_turu not in ["EJDER", "KALKAN", "KAPAN", "ULTI"]:
+            return None
+        
+        yetenek_bekleme_suresi = YETENEK_BEKLEME_SURESI - self.yetenek_cd_azaltma
+        ejder_bekleme_suresi = EJDER_BEKLEME_SURESI - self.yetenek_cd_azaltma
+        kapan_bekleme_suresi = KAPAN_BEKLEME_SURESI - self.yetenek_cd_azaltma
+        ulti_bekleme_suresi = ULTI_BEKLEME_SURESI - self.yetenek_cd_azaltma
+
+        if yetenek_turu == "ATES_TOHUMU" and simdiki_zaman > self.ates_tohumu_cd_bitis:
+            self.yetenek_aktif = "ATES_TOHUMU"
+            self.yetenek_bitis_zamani = simdiki_zaman + YETENEK_SURESI
+            self.ates_tohumu_cd_bitis = simdiki_zaman + yetenek_bekleme_suresi
+        elif yetenek_turu == "ELEKTRIK" and simdiki_zaman > self.elektrik_cd_bitis:
+            self.yetenek_aktif = "ELEKTRIK"
+            self.yetenek_bitis_zamani = simdiki_zaman + YETENEK_SURESI
+            self.elektrik_cd_bitis = simdiki_zaman + yetenek_bekleme_suresi
+        elif yetenek_turu == "GULLE" and simdiki_zaman > self.gulle_cd_bitis:
+            self.yetenek_aktif = "GULLE"
+            self.yetenek_bitis_zamani = simdiki_zaman + YETENEK_SURESI
+            self.gulle_cd_bitis = simdiki_zaman + yetenek_bekleme_suresi
+        elif yetenek_turu == "EJDER" and simdiki_zaman > self.ejder_cd_bitis:
+            self.ejder_cd_bitis = simdiki_zaman + ejder_bekleme_suresi
+            yeni_nesneler.append(EjderCagrisi(self.rect.centerx))
+        elif yetenek_turu == "KALKAN" and simdiki_zaman > self.kalkan_cd_bitis:
+            self.kalkan_cd_bitis = simdiki_zaman + yetenek_bekleme_suresi
+            yeni_nesneler.append(Barikat(self.rect))
+        elif yetenek_turu == "KAPAN" and simdiki_zaman > self.kapan_cd_bitis:
+            self.kapan_cd_bitis = simdiki_zaman + kapan_bekleme_suresi
+            yeni_nesneler.append(Kapan(self.rect))
+        elif yetenek_turu == "ULTI" and simdiki_zaman > self.ulti_cd_bitis:
+            self.ulti_cd_bitis = simdiki_zaman + ulti_bekleme_suresi
+            yeni_nesneler.append(IşıkÇağlayanı())
+            
+        return yeni_nesneler
+    
+    def update(self):
+        if self.kilic_aktif != self._kilic_durumu_gecerli:
+            self.image = self.image_orjinal.copy()
+            if self.kilic_aktif:
+                pygame.draw.line(self.image, RENK_KILIC, (self.rect.width/2, self.rect.height), (self.rect.width/2 - 10, self.rect.height - 30), 5)
+                pygame.draw.line(self.image, RENK_KILIC, (self.rect.width/2 - 10, self.rect.height - 30), (self.rect.width/2 + 10, self.rect.height - 30), 5)
+            self.image_orjinal_donuk = self.image
+            self._kilic_durumu_gecerli = self.kilic_aktif
+        
+        self.update_efekt()
+        
+        simdiki_zaman = pygame.time.get_ticks()
+        
+        if self.guc_aktif and simdiki_zaman > self.gucup_bitis_zamani:
+            self.guc_aktif = False
+        
+        if self.kilic_aktif and simdiki_zaman > self.kilic_bitis_zamani:
+            self.kilic_aktif = False
+        
+        if self.yetenek_aktif != "YOK" and simdiki_zaman > self.yetenek_bitis_zamani:
+            self.yetenek_aktif = "YOK"
+        
+        if self.skor_carpani_aktif and simdiki_zaman - self.skor_carpani_baslangic_zamani > self.skor_carpani_sure:
+            self.skor_carpani_aktif = False
+            
+        self.rect.x += self.hareket_kontrol()
+        self.rect.left = max(0, self.rect.left)
+        self.rect.right = min(EKRAN_GENISLIK, self.rect.right)
+            
+    def hareket_kontrol(self):
+        hiz_x = 0
+        tuslar = pygame.key.get_pressed()
+        
+        if tuslar[pygame.K_LEFT]:
+            hiz_x = -self.hiz_x
+        
+        if tuslar[pygame.K_RIGHT]:
+            hiz_x = self.hiz_x
+            
+        if pygame.mouse.get_pressed()[0]:
+            fare_pozisyonu = pygame.mouse.get_pos()
+            
+            is_on_button = any(btn.collidepoint(fare_pozisyonu) for btn in [ATES_TOHUMU_BUTON, ELEKTRIK_BUTON, GULLE_BUTON, EJDER_BUTON, KALKAN_BUTON, KAPAN_BUTON, ULTI_BUTON, PAUSE_BUTON])
+            
+            if not is_on_button:
+                if fare_pozisyonu[0] < self.rect.centerx - 5:
+                    hiz_x = -self.hiz_x
+                elif fare_pozisyonu[0] > self.rect.centerx + 5:
+                    hiz_x = self.hiz_x
+        
+        return hiz_x
+
+    def ates_et(self):
+        simdiki_zaman = pygame.time.get_ticks()
+        
+        ates_hizi = self.ates_gecikmesi
+        if self.guc_aktif:
+            ates_hizi = 100
+        elif self.yetenek_aktif == "ATES_TOHUMU":
+            ates_hizi = 350
+        elif self.yetenek_aktif == "ELEKTRIK":
+            ates_hizi = 100
+        elif self.yetenek_aktif == "GULLE":
+            ates_hizi = 800
+            
+        if simdiki_zaman - self.son_ates > ates_hizi:
+            self.son_ates = simdiki_zaman
+            mermiler = []
+            
+            if self.yetenek_aktif == "ATES_TOHUMU":
+                mermiler.append(AtesTohumu(self.rect.centerx, self.rect.top))
+            elif self.yetenek_aktif == "ELEKTRIK":
+                mermiler.append(Elektrik(self.rect.centerx, self.rect.top))
+            elif self.yetenek_aktif == "GULLE":
+                mermiler.append(Gulle(self.rect.centerx, self.rect.top))
+            else:
+                mermiler.append(IsikOku(self.rect.centerx, self.rect.top, self.skin_adi, self.ekstra_hasar))
+                
+            if self.guc_aktif:
+                mermiler.append(IsikOku(self.rect.left, self.rect.centery, self.skin_adi, self.ekstra_hasar))
+                mermiler.append(IsikOku(self.rect.right, self.rect.centery, self.skin_adi, self.ekstra_hasar))
+                
+            return mermiler
+        return None
+
+    def hasar_al(self, hasar):
+        if self.can > 0:
+            self.can -= hasar
+            self.darbe_efekti()
+            # Hasar alma sesini çal
+            if global_damage_sound:
+                global_damage_sound.play()
+            if self.can < 0:
+                self.can = 0
+
+class Dusman(Varlik):
+    def __init__(self, skor=0):
+        super().__init__()
+        self.seviye = skor // DUSMAN_SEVIYE_ATLAMA_SKORU
+        self.can = 1 + self.seviye
+        self.hasar = 25 + self.seviye * 5
+        boyut_x, boyut_y = 35, 45
+        
+        cache_key = "dusman_hayalet"
+        if cache_key in IMAGE_CACHE:
+            self.image_orjinal = IMAGE_CACHE[cache_key]
+        else:
+            self.image_orjinal = pygame.Surface([boyut_x, boyut_y], pygame.SRCALPHA)
+            pygame.draw.polygon(self.image_orjinal, RENK_HAYALET, [(boyut_x/2, 0), (boyut_x, boyut_y*0.8), (boyut_x*0.8, boyut_y), (boyut_x/2, boyut_y*0.7), (boyut_x*0.2, boyut_y), (0, boyut_y*0.8)])
+            pygame.draw.circle(self.image_orjinal, RENK_KIRMIZI, (boyut_x*0.35, boyut_y*0.4), boyut_x*0.1)
+            pygame.draw.circle(self.image_orjinal, RENK_KIRMIZI, (boyut_x*0.65, boyut_y*0.4), boyut_x*0.1)
+            self.image_orjinal.set_alpha(200)
+            IMAGE_CACHE[cache_key] = self.image_orjinal
+
+        self.image = self.image_orjinal
+        self.rect = self.image.get_rect(x=random.randrange(EKRAN_GENISLIK - boyut_x), y=random.randrange(-150, -100))
+        self.radius = self.rect.width / 2.2
+        self.hiz_y = random.randrange(2, 6)
+        self.hiz_x = random.randrange(-2, 3)
+        self.hiz_orjinal_y = self.hiz_y
+        self.hiz_orjinal_x = self.hiz_x
+        self.son_donus_zamani = 0
+        self.donus_hizi = random.randrange(-8, 8)
+        self.aci = 0
+        self.image_orjinal_donuk = self.image_orjinal
+        self.guclendirildi = False
+
+    def rotate(self):
+        simdiki_zaman = pygame.time.get_ticks()
+        if simdiki_zaman - self.son_donus_zamani > 75:
+            self.son_donus_zamani = simdiki_zaman
+            self.aci = (self.aci + self.donus_hizi) % 360
+            center = self.rect.center
+            self.image_orjinal_donuk = pygame.transform.rotate(self.image_orjinal, self.aci)
+            self.rect = self.image_orjinal_donuk.get_rect(center=center)
+
+    def update(self):
+        self.rotate()
+        self.rect.y += self.hiz_y
+        self.rect.x += self.hiz_x
+        self.update_efekt()
+        self.yavaslatma_kontrol()
+        if self.rect.top > EKRAN_YUKSEKLIK + 10 or self.rect.left < -45 or self.rect.right > EKRAN_GENISLIK + 45:
+            self.kill()
+
+class HayaletSavaci(Varlik):
+    def __init__(self, skor=0):
+        super().__init__()
+        self.seviye = skor // DUSMAN_SEVIYE_ATLAMA_SKORU
+        
+        cache_key = "dusman_hayalet_savasi"
+        if cache_key in IMAGE_CACHE:
+            self.image_orjinal = IMAGE_CACHE[cache_key]
+        else:
+            self.image_orjinal = pygame.Surface([60, 70], pygame.SRCALPHA)
+            pygame.draw.polygon(self.image_orjinal, RENK_HAYALET_KOYU, [(30,0), (60,40), (50,70), (10,70), (0,40)])
+            pygame.draw.rect(self.image_orjinal, RENK_GRI_ZIRH, (15, 10, 30, 40), border_radius=5)
+            pygame.draw.circle(self.image_orjinal, RENK_SARI_ALTIN, (25, 25), 5)
+            pygame.draw.circle(self.image_orjinal, RENK_SARI_ALTIN, (35, 25), 5)
+            IMAGE_CACHE[cache_key] = self.image_orjinal
+            
+        self.image = self.image_orjinal
+        self.image_orjinal_donuk = self.image_orjinal
+        self.rect = self.image.get_rect(x=random.randrange(EKRAN_GENISLIK - 60), y=random.randrange(-200, -150))
+        self.radius = 30
+        self.can = 3 + self.seviye
+        self.hasar = 35 + self.seviye * 5
+        self.hiz_y = random.randrange(3, 5) + self.seviye * 0.5
+        self.hiz_orjinal_y = self.hiz_y
+        self.guclendirildi = False
+    
+    def update(self):
+        self.rect.y += self.hiz_y
+        self.update_efekt()
+        self.yavaslatma_kontrol()
+        if self.rect.top > EKRAN_YUKSEKLIK:
+            self.kill()
+
+class GozMermisi(TemelMermi):
+    def __init__(self, x, y):
+        super().__init__(x, y)
+        self.image = pygame.Surface([20, 20], pygame.SRCALPHA)
+        pygame.draw.circle(self.image, RENK_GOZ_IRIS, (10, 10), 10)
+        pygame.draw.circle(self.image, RENK_SIYAH, (10, 10), 4)
+        self.rect = self.image.get_rect(center=(x, y))
+        self.hiz_y = 5
+        self.hasar = 15
+
+class Goz(Varlik):
+    def __init__(self, skor=0):
+        super().__init__()
+        self.seviye = skor // DUSMAN_SEVIYE_ATLAMA_SKORU
+        
+        cache_key = "dusman_goz"
+        if cache_key in IMAGE_CACHE:
+            self.image_orjinal = IMAGE_CACHE[cache_key]
+        else:
+            self.image_orjinal = pygame.Surface([80, 80], pygame.SRCALPHA)
+            pygame.draw.circle(self.image_orjinal, RENK_BEYAZ, (40, 40), 40)
+            pygame.draw.circle(self.image_orjinal, RENK_GOZ, (40, 40), 35)
+            pygame.draw.circle(self.image_orjinal, RENK_SIYAH, (40, 40), 15)
+            IMAGE_CACHE[cache_key] = self.image_orjinal
+
+        self.image = self.image_orjinal
+        self.image_orjinal_donuk = self.image_orjinal
+        self.rect = self.image.get_rect(x=random.randrange(EKRAN_GENISLIK - 80), y=random.randrange(50, 200))
+        self.radius = 40
+        self.can = 5 + self.seviye
+        self.hasar = 40 + self.seviye * 5
+        self.hiz_x = random.choice([-3, 3]) + self.seviye * 0.2
+        self.hiz_orjinal_x = self.hiz_x
+        self.son_ates = pygame.time.get_ticks()
+        self.ates_gecikmesi = 8000
+    
+    def update(self):
+        self.rect.x += self.hiz_x
+        if self.rect.left < 0 or self.rect.right > EKRAN_GENISLIK:
+            self.hiz_x *= -1
+            self.hiz_orjinal_x *= -1
+        self.update_efekt()
+        self.yavaslatma_kontrol()
+        
+    def ates_et(self):
+        if pygame.time.get_ticks() - self.son_ates > self.ates_gecikmesi:
+            self.son_ates = pygame.time.get_ticks()
+            return [GozMermisi(self.rect.centerx, self.rect.bottom)]
+        return None
+
+class KoruyucuGargoyle(Varlik):
+    def __init__(self, skor, oyuncu):
+        super().__init__()
+        self.oyuncu = oyuncu
+        self.seviye = skor // DUSMAN_SEVIYE_ATLAMA_SKORU
+        boyut_carpani = 0.2+ self.seviye * 0.2
+        self.hiz_carpani = 1 + self.seviye * 0.1
+        self.can = 15 + self.seviye * 5
+        self.hasar = 75 + self.seviye * 10
+        boyut = int(40* boyut_carpani)
+        
+        cache_key = f"dusman_gargoyle_{boyut}"
+        if cache_key in IMAGE_CACHE:
+            self.image_orjinal = IMAGE_CACHE[cache_key]
+        else:
+            self.image_orjinal = pygame.Surface([boyut, boyut], pygame.SRCALPHA)
+            pygame.draw.polygon(self.image_orjinal, RENK_GARGOYLE, [(boyut/2, 0), (boyut, boyut*0.6), (boyut*0.8, boyut), (boyut*0.2, boyut), (0, boyut*0.6)])
+            pygame.draw.polygon(self.image_orjinal, (120, 120, 120), [(boyut*0.8, 0), (boyut, boyut*0.4), (boyut, boyut*0.6)])
+            pygame.draw.polygon(self.image_orjinal, (120, 120, 120), [(boyut*0.2, 0), (0, boyut*0.4), (0, boyut*0.6)])
+            pygame.draw.circle(self.image_orjinal, RENK_KIRMIZI, (boyut*0.35, boyut*0.4), boyut*0.1)
+            pygame.draw.circle(self.image_orjinal, RENK_KIRMIZI, (boyut*0.65, boyut*0.4), boyut*0.1)
+            IMAGE_CACHE[cache_key] = self.image_orjinal
+            
+        self.image = self.image_orjinal
+        self.image_orjinal_donuk = self.image_orjinal
+        self.rect = self.image.get_rect(x=random.randrange(EKRAN_GENISLIK - boyut), y=random.randrange(-250, -200))
+        self.radius = self.rect.width / 2.2
+    
+    def update(self):
+        dx = self.oyuncu.rect.x - self.rect.x
+        dy = self.oyuncu.rect.y - self.rect.y
+        uzunluk = math.hypot(dx, dy)
+        if uzunluk > 0:
+            hiz = (2 + self.hiz_carpani)
+            self.rect.x += (dx / uzunluk) * hiz
+            self.rect.y += (dy / uzunluk) * hiz
+        self.update_efekt()
+
+class EttenDuvarGoblin(Varlik):
+    def __init__(self, skor=0):
+        super().__init__()
+        self.seviye = skor // 20000
+        boyut_carpani = 1.2 + self.seviye * 0.1
+        self.hiz_carpani = 0.5 + self.seviye * 0.1
+        self.can = 20 + self.seviye * 10
+        self.hasar = 50 + self.seviye * 10
+        boyut_x = int(45 * boyut_carpani)
+        boyut_y = int(55 * boyut_carpani)
+        
+        cache_key = f"dusman_goblin_{boyut_x}"
+        if cache_key in IMAGE_CACHE:
+            self.image_orjinal = IMAGE_CACHE[cache_key]
+        else:
+            self.image_orjinal = pygame.Surface([boyut_x, boyut_y], pygame.SRCALPHA)
+            pygame.draw.rect(self.image_orjinal, RENK_TROL_YESIL, (0, 10, boyut_x, boyut_y-10))
+            pygame.draw.circle(self.image_orjinal, RENK_SIYAH, (int(boyut_x*0.3), int(boyut_y*0.3)), 5)
+            pygame.draw.circle(self.image_orjinal, RENK_SIYAH, (int(boyut_x*0.7), int(boyut_y*0.3)), 5)
+            IMAGE_CACHE[cache_key] = self.image_orjinal
+
+        self.image = self.image_orjinal
+        self.image_orjinal_donuk = self.image_orjinal
+        self.rect = self.image.get_rect(x=random.randrange(EKRAN_GENISLIK - boyut_x), y=random.randrange(-300, -250))
+        self.radius = self.rect.width / 2
+        self.hiz_y = random.randrange(1, 3) * self.hiz_carpani
+        self.hiz_orjinal_y = self.hiz_y
+        
+    def update(self):
+        self.rect.y += self.hiz_y
+        if self.rect.y > EKRAN_YUKSEKLIK/2:
+            self.hiz_y = 0
+        self.update_efekt()
+        self.yavaslatma_kontrol()
+        if self.rect.top > EKRAN_YUKSEKLIK:
+            self.kill()
+
+class Sıçrayan(Varlik):
+    def __init__(self, hedef_dusman):
+        super().__init__()
+        self.hedef_dusman = hedef_dusman
+        self.hedef_dusman.guclendirildi = True
+        self.seviye = self.hedef_dusman.seviye
+        self.can = 1
+        self.hasar = 0 # Sıçrayanların kendi hasarı yok, düşmanı güçlendirir.
+        self.hiz_y = 5 + self.seviye * 0.5
+        self.hiz_x = random.choice([-3, 3]) + self.seviye * 0.2
+        self.radius = 15
+
+        cache_key = "sıçrayan_gucu"
+        if cache_key in IMAGE_CACHE:
+            self.image_orjinal = IMAGE_CACHE[cache_key]
+        else:
+            self.image_orjinal = pygame.Surface([30, 30], pygame.SRCALPHA)
+            pygame.draw.circle(self.image_orjinal, RENK_ELEKTRIK_MAVI, (15, 15), 15)
+            pygame.draw.circle(self.image_orjinal, RENK_BEYAZ, (15, 15), 10)
+            pygame.draw.circle(self.image_orjinal, RENK_ELEKTRIK_MAVI, (15, 15), 5)
+            IMAGE_CACHE[cache_key] = self.image_orjinal
+        
+        self.image = self.image_orjinal
+        self.image_orjinal_donuk = self.image_orjinal
+        self.rect = self.image.get_rect(center=self.hedef_dusman.rect.center)
+        
+    def update(self):
+        if self.hedef_dusman.alive():
+            self.rect.center = self.hedef_dusman.rect.center
+        else:
+            self.kill()
+        self.update_efekt()
+
+class GucUp(pygame.sprite.Sprite):
+    def __init__(self, merkez, tip='GUC'):
+        super().__init__()
+        self.tip = tip
+        
+        cache_key = f"gucup_{tip}"
+        if cache_key in IMAGE_CACHE:
+            self.image = IMAGE_CACHE[cache_key]
+        else:
+            self.image = pygame.Surface([30, 30], pygame.SRCALPHA)
+            if self.tip == 'KALKAN':
+                pygame.draw.rect(self.image, RENK_KALKAN_MAVI, (5,0,20,30))
+                pygame.draw.arc(self.image, RENK_KALKAN_MAVI, (0,0,30,30), 0, math.pi, 5)
+            else:
+                pygame.draw.polygon(self.image, RENK_MAVI, [(15,0), (20,10), (30,12), (20,15), (15,30), (10,15), (0,12), (10,10)])
+            IMAGE_CACHE[cache_key] = self.image
+
+        self.rect = self.image.get_rect(center=merkez)
+        self.hiz_y = 4
+    def update(self):
+        self.rect.y += self.hiz_y
+        if self.rect.top > EKRAN_YUKSEKLIK:
+            self.kill()
+
+class Kalp(pygame.sprite.Sprite):
+    def __init__(self, merkez):
+        super().__init__()
+        
+        cache_key = "item_kalp"
+        if cache_key in IMAGE_CACHE:
+            self.image = IMAGE_CACHE[cache_key]
+        else:
+            boyut = 30
+            self.image = pygame.Surface([boyut, boyut], pygame.SRCALPHA)
+            pygame.draw.circle(self.image, RENK_KALP, (int(boyut * 0.3), int(boyut * 0.4)), int(boyut * 0.3))
+            pygame.draw.circle(self.image, RENK_KALP, (int(boyut * 0.7), int(boyut * 0.4)), int(boyut * 0.3))
+            pygame.draw.polygon(self.image, RENK_KALP, [(int(boyut * 0.1), int(boyut * 0.4)), (boyut//2, boyut), (int(boyut * 0.9), int(boyut * 0.4))])
+            IMAGE_CACHE[cache_key] = self.image
+
+        self.rect = self.image.get_rect(center=merkez)
+        self.hiz_y = 4
+    def update(self):
+        self.rect.y += self.hiz_y
+        if self.rect.top > EKRAN_YUKSEKLIK:
+            self.kill()
+
+class Kilic(pygame.sprite.Sprite):
+    def __init__(self, merkez):
+        super().__init__()
+        
+        cache_key = "item_kilic"
+        if cache_key in IMAGE_CACHE:
+            self.image = IMAGE_CACHE[cache_key]
+        else:
+            self.image = pygame.Surface([20, 50], pygame.SRCALPHA)
+            pygame.draw.rect(self.image, RENK_GRI_KOYU, (8, 40, 4, 10))
+            pygame.draw.rect(self.image, RENK_SARI_ALTIN, (0, 35, 20, 5))
+            pygame.draw.polygon(self.image, RENK_KILIC, [(10, 0), (12, 35), (8, 35)])
+            IMAGE_CACHE[cache_key] = self.image
+
+        self.rect = self.image.get_rect(center=merkez)
+        self.hiz_y = 4
+    def update(self):
+        self.rect.y += self.hiz_y
+        if self.rect.top > EKRAN_YUKSEKLIK:
+            self.hasar = 99999
+            self.kill()
+            
+# =============================================================================
+# OYUN YÖNETİMİ VE DÖNGÜ
+# =============================================================================
+# Global ses değişkenleri
+global_explosion_sound = None
+global_damage_sound = None
+global_click_sound = None
+# Ekleme: Global game over sesi değişkeni
+global_game_over_sound = None
+
+def yeni_dusman_yarat(skor, oyuncu, gargoyle_sayaci, goblin_sayaci, tum_spritelar):
+    rand_val = random.random()
+    
+    yeni_d = None
+    if skor < 2000:
+        yeni_d = Dusman(skor)
+    elif 2000 <= skor < 8000:
+        yeni_d = HayaletSavaci(skor) if rand_val < 0.3 else Dusman(skor)
+    elif 8000 <= skor < 19000:
+        if rand_val < 0.2:
+            yeni_d = Goz(skor)
+        elif rand_val < 0.5:
+            yeni_d = HayaletSavaci(skor)
+        else:
+            yeni_d = Dusman(skor)
+    elif 19000 <= skor < 60000:
+        if gargoyle_sayaci < 2 and rand_val < 0.1:
+            yeni_d = KoruyucuGargoyle(skor, oyuncu)
+        elif rand_val < 0.3:
+            yeni_d = Goz(skor)
+        elif rand_val < 0.6:
+            yeni_d = HayaletSavaci(skor)
+        else:
+            yeni_d = Dusman(skor)
+    else:
+        if goblin_sayaci < 10 and rand_val < 0.15:
+            yeni_d = EttenDuvarGoblin(skor)
+        elif gargoyle_sayaci < 2 and rand_val < 0.1:
+            yeni_d = KoruyucuGargoyle(skor, oyuncu)
+        elif rand_val < 0.3:
+            yeni_d = Goz(skor)
+        elif rand_val < 0.6:
+            yeni_d = HayaletSavaci(skor)
+        else:
+            yeni_d = Dusman(skor)
+        
+    if skor >= 30000 and random.random() < 0.05:
+        hedef_list = [d for d in tum_spritelar if isinstance(d, (Dusman, HayaletSavaci)) and not d.guclendirildi]
+        if hedef_list:
+            hedef = random.choice(hedef_list)
+            yeni_s = Sıçrayan(hedef)
+            tum_spritelar.add(yeni_s)
+            hedef.can += 20 + hedef.seviye * 10
+            hedef.hiz_y *= 2
+            hedef.hiz_orjinal_y *= 2
+            if hasattr(hedef, 'hiz_x'):
+                 hedef.hiz_x *= 2
+                 hedef.hiz_orjinal_x *= 2
+
+    return yeni_d
+
+def ana_dongu():
+    global global_explosion_sound, global_damage_sound, global_click_sound, global_game_over_sound
+
+    ekran = pygame.display.set_mode((EKRAN_GENISLIK, EKRAN_YUKSEKLIK))
+    pygame.display.set_caption("Kings of the Level")
+    saat = pygame.time.Clock()
+
+    # Müzik ve Ses efektlerini yükle
+    # Eğer müzik klasörü yoksa oluştur
+    if not os.path.exists(MUSIC_FOLDER):
+        os.makedirs(MUSIC_FOLDER)
+        print(f"'{MUSIC_FOLDER}' klasörü oluşturuldu. Lütfen arka plan müzik dosyanızı buraya koyun.")
+
+    if os.path.exists(MUSIC_FILE):
+        try:
+            pygame.mixer.music.load(MUSIC_FILE)
+            pygame.mixer.music.set_volume(MUSIC_VOLUME)
+            # Müziği burada başlatmıyoruz, oyun başladığında başlatacağız.
+        except pygame.error as e:
+            print(f"Müzik yüklenirken bir hata oluştu: {e}. Arka plan müziği çalmayabilir.")
+            print(f"Lütfen '{MUSIC_FILE}' dosyasının geçerli bir MP3 olduğundan ve erişilebilir olduğundan emin olun.")
+    else:
+        print(f"Uyarı: Müzik dosyası bulunamadı: '{MUSIC_FILE}'. Lütfen bu dosyayı '{MUSIC_FOLDER}' klasörüne yerleştirin.")
+
+    # Eğer ses klasörü yoksa oluştur
+    if not os.path.exists(SOUND_FOLDER):
+        os.makedirs(SOUND_FOLDER)
+        print(f"'{SOUND_FOLDER}' klasörü oluşturuldu. Lütfen ses efektlerinizi buraya koyun.")
+
+    if os.path.exists(EXPLOSION_SOUND_FILE):
+        try:
+            global_explosion_sound = pygame.mixer.Sound(EXPLOSION_SOUND_FILE)
+            global_explosion_sound.set_volume(EXPLOSION_SOUND_VOLUME)
+        except pygame.error as e:
+            print(f"Patlama sesi yüklenirken bir hata oluştu: {e}. Patlama sesleri çalmayabilir.")
+            print(f"Lütfen '{EXPLOSION_SOUND_FILE}' dosyasının geçerli bir MP3 olduğundan ve erişilebilir olduğundan emin olun.")
+    else:
+        print(f"Uyarı: Patlama sesi dosyası bulunamadı: '{EXPLOSION_SOUND_FILE}'. Lütfen bu dosyayı '{SOUND_FOLDER}' klasörüne yerleştirin.")
+
+    if os.path.exists(DAMAGE_SOUND_FILE):
+        try:
+            global_damage_sound = pygame.mixer.Sound(DAMAGE_SOUND_FILE)
+            global_damage_sound.set_volume(DAMAGE_SOUND_VOLUME)
+        except pygame.error as e:
+            print(f"Hasar sesi yüklenirken bir hata oluştu: {e}. Hasar sesleri çalmayabilir.")
+            print(f"Lütfen '{DAMAGE_SOUND_FILE}' dosyasının geçerli bir MP3 olduğundan ve erişilebilir olduğundan emin olun.")
+    else:
+        print(f"Uyarı: Hasar sesi dosyası bulunamadı: '{DAMAGE_SOUND_FILE}'. Lütfen bu dosyayı '{SOUND_FOLDER}' klasörüne yerleştirin.")
+
+    if os.path.exists(CLICK_SOUND_FILE):
+        try:
+            global_click_sound = pygame.mixer.Sound(CLICK_SOUND_FILE)
+            global_click_sound.set_volume(CLICK_SOUND_VOLUME)
+        except pygame.error as e:
+            print(f"Tıklama sesi yüklenirken bir hata oluştu: {e}. Tıklama sesleri çalmayabilir.")
+            print(f"Lütfen '{CLICK_SOUND_FILE}' dosyasının geçerli bir MP3 olduğundan ve erişilebilir olduğundan emin olun.")
+    else:
+        print(f"Uyarı: Tıklama sesi dosyası bulunamadı: '{CLICK_SOUND_FILE}'. Lütfen bu dosyayı '{SOUND_FOLDER}' klasörüne yerleştirin.")
+
+    # Ekleme: Game over sesi yükleme
+    if os.path.exists(GAME_OVER_SOUND_FILE):
+        try:
+            global_game_over_sound = pygame.mixer.Sound(GAME_OVER_SOUND_FILE)
+            global_game_over_sound.set_volume(GAME_OVER_SOUND_VOLUME)
+        except pygame.error as e:
+            print(f"Game over sesi yüklenirken bir hata oluştu: {e}. Game over sesleri çalmayabilir.")
+            print(f"Lütfen '{GAME_OVER_SOUND_FILE}' dosyasının geçerli bir MP3 olduğundan ve erişilebilir olduğundan emin olun.")
+    else:
+        print(f"Uyarı: Game over sesi dosyası bulunamadı: '{GAME_OVER_SOUND_FILE}'. Lütfen bu dosyayı '{SOUND_FOLDER}' klasörüne yerleştirin.")
+
+
+    def rekor_oku():
+        if not os.path.exists(REKOR_DOSYA):
+            return 0
+        try:
+            with open(REKOR_DOSYA, "r") as f:
+                return int(f.read())
+        except (IOError, ValueError):
+            return 0
+
+    def rekor_kaydet(skor):
+        with open(REKOR_DOSYA, "w") as f:
+            f.write(str(skor))
+    
+    def baslangic_ekrani_goster():
+        rekor_skor = rekor_oku()
+        ekran.fill(RENK_SIYAH)
+        
+        metin_ciz(ekran, "LİGHT KNİGHT HENRY", FONT_BUYUK, EKRAN_GENISLIK/2, EKRAN_YUKSEKLIK/4, RENK_SARI_ALTIN)
+        metin_ciz(ekran, "Işık Şövalyesi'nin Macerası", FONT_ORTA, EKRAN_GENISLIK/2, EKRAN_YUKSEKLIK/2)
+        metin_ciz(ekran, f"REKOR SKOR: {rekor_skor}", FONT_KUCUK, EKRAN_GENISLIK/2, EKRAN_YUKSEKLIK/2 + 60)
+        metin_ciz(ekran, "Başlamak için bir yere dokun.", FONT_KUCUK, EKRAN_GENISLIK/2, EKRAN_YUKSEKLIK*3/4 + 60)
+        
+        pygame.display.flip()
+        
+        bekliyor = True
+        while bekliyor:
+            saat.tick(FPS)
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                if event.type in [pygame.MOUSEBUTTONUP, pygame.KEYUP]:
+                    if global_click_sound:
+                        global_click_sound.play()
+                    bekliyor = False
+
+    def skin_secim_ekrani(ekran, oyuncu, skor):
+        skinler = ["IŞIK ŞÖVALYESİ", "ATEŞ ŞÖVALYESİ", "GÖLGE ŞÖVALYESİ"]
+        if skor >= 1500:
+            skinler.append("İSKELET")
+        if skor >= 3000:
+            skinler.append("ORK")
+        if skor >= 4500:
+            skinler.append("ELF ADAM")
+        if skor >= 5000:
+            skinler.append("KEDİ MUHAFIZ")
+        if skor >= 10000:
+            skinler.append("BUZ ŞÖVALYESİ")
+        if skor >= 20000:
+            skinler.append("NINJA")
+        if skor >= 30000:
+            skinler.append("VİKİNG")
+        if skor >= 40000:
+            skinler.append("GLADYATÖR")
+        if skor >= 70000:
+            skinler.append("KRAL ŞÖVALYE")
+        if skor >= 100000:
+            skinler.append("KÖYLÜ")
+        if skor >= 200000:
+            skinler.append("BÜYÜCÜ")
+        if skor >= 400000:
+            skinler.append("THE KINGS")
+        
+
+        secili_skin = 0
+        bekliyor = True
+        
+        while bekliyor:
+            ekran.fill(RENK_SIYAH)
+            metin_ciz(ekran, "SKİN SEÇİMİ", FONT_BUYUK, EKRAN_GENISLIK/2, EKRAN_YUKSEKLIK/4, RENK_SARI_ALTIN)
+            
+            oyuncu.skin_sec(skinler[secili_skin])
+            ekran.blit(oyuncu.image, (EKRAN_GENISLIK/2 - oyuncu.rect.width/2, EKRAN_YUKSEKLIK/2 - oyuncu.rect.height/2))
+            metin_ciz(ekran, skinler[secili_skin], FONT_ORTA, EKRAN_GENISLIK/2, EKRAN_YUKSEKLIK/2 + 80)
+            
+            metin_ciz(ekran, "<", FONT_BUYUK, EKRAN_GENISLIK/2 - 250, EKRAN_YUKSEKLIK/2, RENK_BEYAZ)
+            metin_ciz(ekran, ">", FONT_BUYUK, EKRAN_GENISLIK/2 + 250, EKRAN_YUKSEKLIK/2, RENK_BEYAZ)
+            metin_ciz(ekran, "Seçmek için 'Enter' veya 'Space' tuşuna bas.", FONT_KUCUK, EKRAN_GENISLIK/2, EKRAN_YUKSEKLIK*3/4)
+            
+            pygame.display.flip()
+            
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RIGHT:
+                        if global_click_sound:
+                            global_click_sound.play()
+                        secili_skin = (secili_skin + 1) % len(skinler)
+                    if event.key == pygame.K_LEFT:
+                        if global_click_sound:
+                            global_click_sound.play()
+                        secili_skin = (secili_skin - 1 + len(skinler)) % len(skinler)
+                    if event.key in [pygame.K_RETURN, pygame.K_SPACE]:
+                        if global_click_sound:
+                            global_click_sound.play()
+                        bekliyor = False
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    mouse_x, _ = event.pos
+                    if EKRAN_GENISLIK/2 - 300 < mouse_x < EKRAN_GENISLIK/2 - 200:
+                        if global_click_sound:
+                            global_click_sound.play()
+                        secili_skin = (secili_skin - 1 + len(skinler)) % len(skinler)
+                    elif EKRAN_GENISLIK/2 + 200 < mouse_x < EKRAN_GENISLIK/2 + 300:
+                        if global_click_sound:
+                            global_click_sound.play()
+                        secili_skin = (secili_skin + 1) % len(skinler)
+                    else:
+                        if global_click_sound:
+                            global_click_sound.play()
+                        bekliyor = False
+        return skinler[secili_skin]
+
+    def oyun_bitti_ekrani_goster(skor):
+        rekor_skor = rekor_oku()
+        yeni_rekor = False
+        
+        if skor > rekor_skor:
+            rekor_kaydet(skor)
+            yeni_rekor = True
+            rekor_skor = skor
+        
+        ekran.fill(RENK_SIYAH)
+        metin_ciz(ekran, "OYUN BİTTİ", FONT_BUYUK, EKRAN_GENISLIK/2, EKRAN_YUKSEKLIK/4, RENK_KIRMIZI)
+        metin_ciz(ekran, f"SKOR: {skor}", FONT_ORTA, EKRAN_GENISLIK/2, EKRAN_YUKSEKLIK/2, RENK_SARI_ALTIN)
+        
+        if yeni_rekor:
+            metin_ciz(ekran, "YENİ REKOR!", FONT_KUCUK, EKRAN_GENISLIK/2, EKRAN_YUKSEKLIK/2 + 60, RENK_MAVI)
+        
+        metin_ciz(ekran, f"REKOR: {rekor_skor}", FONT_KUCUK, EKRAN_GENISLIK/2, EKRAN_YUKSEKLIK/2 + 100, RENK_BEYAZ)
+        metin_ciz(ekran, "Menüye dönülüyor...", FONT_KUCUK, EKRAN_GENISLIK/2, EKRAN_YUKSEKLIK*3/4)
+        
+        pygame.display.flip()
+        
+        # Oyun bittiğinde müziği soldur
+        if pygame.mixer.music.get_busy():
+            pygame.mixer.music.fadeout(2000)
+            
+        pygame.time.delay(5000)
+
+    last_rendered_skor = -1
+    last_rendered_cd = {}
+    
+    skor_text_surface = FONT_ORTA.render("SKOR:", True, RENK_BEYAZ)
+    skor_text_rect = skor_text_surface.get_rect(right=EKRAN_GENISLIK/2 - 10, centery=35)
+    
+    can_text_surface = FONT_KUCUK.render("CAN:", True, RENK_BEYAZ)
+    can_text_rect = can_text_surface.get_rect(right=130, centery=35)
+    
+    pause_text_surface = FONT_KUCUK.render("DURAKLAT", True, RENK_BEYAZ)
+
+    def arayuz_ciz(skor, oyuncu):
+        nonlocal last_rendered_skor, last_rendered_cd
+        
+        ekran.blit(skor_text_surface, skor_text_rect)
+        if skor != last_rendered_skor:
+            skor_val_surf = FONT_ORTA.render(str(skor), True, RENK_BEYAZ)
+            last_rendered_skor = (skor, skor_val_surf)
+        else:
+            _, skor_val_surf = last_rendered_skor
+        ekran.blit(skor_val_surf, (EKRAN_GENISLIK/2, skor_text_rect.y))
+        
+        ekran.blit(can_text_surface, can_text_rect)
+        can_bari_ciz(ekran, 140, 25, (oyuncu.can/oyuncu.max_can)*100, 200, 20)
+        
+        if oyuncu.guc_aktif:
+            metin_ciz(ekran, "GÜÇ AKTİF!", FONT_KUCUK, EKRAN_GENISLIK / 2, 70, RENK_MAVI)
+        
+        if oyuncu.kilic_aktif:
+            metin_ciz(ekran, "KILIÇ AKTİF! ", FONT_KUCUK, EKRAN_GENISLIK / 2, 100, RENK_KILIC)
+        
+        if oyuncu.skor_carpani_aktif: 
+            kalan_sure = max(0, oyuncu.skor_carpani_sure - (pygame.time.get_ticks() - oyuncu.skor_carpani_baslangic_zamani))
+            metin_ciz(ekran, f"x2 SKOR! Kalan süre: {kalan_sure//1000}s", FONT_KUCUK, EKRAN_GENISLIK / 2, 130, RENK_GUCLENDIRME_YESIL)
+        
+        simdiki_zaman = pygame.time.get_ticks()
+        yetenek_bekleme_suresi_guncel = YETENEK_BEKLEME_SURESI - oyuncu.yetenek_cd_azaltma
+        ejder_bekleme_suresi_guncel = EJDER_BEKLEME_SURESI - oyuncu.yetenek_cd_azaltma
+        kapan_bekleme_suresi_guncel = KAPAN_BEKLEME_SURESI - oyuncu.yetenek_cd_azaltma
+        ulti_bekleme_suresi_guncel = ULTI_BEKLEME_SURESI - oyuncu.yetenek_cd_azaltma
+        
+        butonlar = {
+            "T": (ATES_TOHUMU_BUTON, oyuncu.ates_tohumu_cd_bitis, yetenek_bekleme_suresi_guncel, RENK_ATES_PORTAKAL),
+            "E": (ELEKTRIK_BUTON, oyuncu.elektrik_cd_bitis, yetenek_bekleme_suresi_guncel, RENK_ELEKTRIK_MAVI),
+            "G": (GULLE_BUTON, oyuncu.gulle_cd_bitis, yetenek_bekleme_suresi_guncel, RENK_GULLE),
+            "D": (EJDER_BUTON, oyuncu.ejder_cd_bitis, ejder_bekleme_suresi_guncel, RENK_EJDER_YESIL),
+            "K": (KALKAN_BUTON, oyuncu.kalkan_cd_bitis, yetenek_bekleme_suresi_guncel, RENK_KALKAN_MAVI),
+            "A": (KAPAN_BUTON, oyuncu.kapan_cd_bitis, kapan_bekleme_suresi_guncel, RENK_MOR_KAPAN),
+            "U": (ULTI_BUTON, oyuncu.ulti_cd_bitis, ulti_bekleme_suresi_guncel, RENK_ULTI_ISIK)
+        }
+        
+        for harf, (buton_rect, cd_bitis, cd_toplam, renk) in butonlar.items():
+            cd_kalan = cd_bitis - simdiki_zaman
+            
+            pygame.draw.rect(ekran, RENK_GRI_KOYU, (buton_rect.x + 5, buton_rect.y + 5, buton_rect.width, buton_rect.height), border_radius=10)
+            
+            if cd_kalan > 0:
+                yuzde = cd_kalan / cd_toplam
+                pygame.draw.rect(ekran, RENK_GRI_ZIRH, buton_rect, border_radius=10)
+                dolum_yuksekligi = yuzde * BUTON_BOYUTU
+                pygame.draw.rect(ekran, (0,0,0,150), (buton_rect.x, buton_rect.y, BUTON_BOYUTU, dolum_yuksekligi))
+                
+                cd_saniye = int(cd_kalan / 1000) + 1
+                if last_rendered_cd.get(harf, (None, None))[0] != cd_saniye:
+                    cd_text = FONT_ORTA.render(str(cd_saniye), True, RENK_BEYAZ)
+                    last_rendered_cd[harf] = (cd_saniye, cd_text)
+                else:
+                    _, cd_text = last_rendered_cd[harf]
+                ekran.blit(cd_text, cd_text.get_rect(center=buton_rect.center))
+            else:
+                pygame.draw.rect(ekran, renk, buton_rect, border_radius=10)
+                metin_ciz(ekran, harf, FONT_ORTA, buton_rect.centerx, buton_rect.centery, RENK_BEYAZ)
+        
+        pygame.draw.rect(ekran, RENK_GRI_KOYU, PAUSE_BUTON, border_radius=10)
+        ekran.blit(pause_text_surface, pause_text_surface.get_rect(center=PAUSE_BUTON.center))
+
+    while True:
+        rekor_skor = rekor_oku()
+        baslangic_ekrani_goster()
+        
+        oyuncu = Oyuncu()
+        secilen_skin_adi = skin_secim_ekrani(ekran, oyuncu, rekor_skor)
+        oyuncu.skin_sec(secilen_skin_adi)
+        
+        # OYUN BAŞLADIĞINDA MÜZİĞİ ÇAL
+        if os.path.exists(MUSIC_FILE) and not pygame.mixer.music.get_busy():
+            try:
+                pygame.mixer.music.play(-1) # -1, müziği sonsuz döngüde çal anlamına gelir
+            except pygame.error as e:
+                print(f"Müzik çalarken hata: {e}")
+
+        tum_spritelar = pygame.sprite.Group(oyuncu)
+        dusmanlar = pygame.sprite.Group()
+        mermiler = pygame.sprite.Group()
+        guc_uplar = pygame.sprite.Group()
+        ejder_cagrilari = pygame.sprite.Group()
+        dusman_mermileri = pygame.sprite.Group()
+        barikatlar = pygame.sprite.Group()
+        kapanlar = pygame.sprite.Group()
+        kalpler = pygame.sprite.Group()
+        kiliclar = pygame.sprite.Group()
+        ulti_efektleri = pygame.sprite.Group()
+        
+        skor = 0
+        ekran_titreme_sayaci = 0
+        oyun_durdu = False
+        sandik_acma_modu = False
+        son_sandik_skoru = 0
+        gargoyle_oldurme_sayaci = 0
+        gargoyle_sayaci = 0
+        goblin_sayaci = 0
+
+        for _ in range(DUSMAN_MAX_SAYISI):
+            yeni_d = yeni_dusman_yarat(skor, oyuncu, gargoyle_sayaci, goblin_sayaci, tum_spritelar)
+            if yeni_d:
+                tum_spritelar.add(yeni_d)
+                dusmanlar.add(yeni_d)
+                if isinstance(yeni_d, KoruyucuGargoyle):
+                    gargoyle_sayaci += 1
+                if isinstance(yeni_d, EttenDuvarGoblin):
+                    goblin_sayaci += 1
+
+        oyun_ici_dongu = True
+        while oyun_ici_dongu:
+            saat.tick(FPS)
+            
+            # --- Sandık Açma Kontrolü ve Modu Başlatma
+            if skor > 0 and skor >= son_sandik_skoru + SANDIK_ACMA_ARALIGI and not sandik_acma_modu:
+                sandik_acma_modu = True
+                # Müzik varsa duraklat
+                if pygame.mixer.music.get_busy():
+                    pygame.mixer.music.pause()
+                    
+                son_sandik_skoru = (skor // SANDIK_ACMA_ARALIGI) * SANDIK_ACMA_ARALIGI
+
+                sandik_sprite = pygame.sprite.GroupSingle(Sandik((EKRAN_GENISLIK/2, EKRAN_YUKSEKLIK/2 - 150)))
+                
+                guclendirmeler_listesi = [
+                    ("MAKSİMUM CAN", "Canını 50 artırır.", "MAX_CAN"),
+                    ("HIZ ARTIŞI", "Hareket hızını 2 artırır.", "HIZ"),
+                    ("ATEŞ HIZI", "Atış gecikmesini 50 azaltır.", "ATES_HIZI"),
+                    ("EKSTRA HASAR", "Ok başına 1 hasar ekler.", "EKSTRA_HASAR"),
+                    ("DÜŞMAN YAVAŞLATMA", "Tüm düşmanları 10sn yavaşlatır.", "DUSMAN_YAVASLATMA"),
+                    ("YETENEK HIZLANDIRMA", "Yetenek CD'lerini 2sn kısaltır.", "YETENEK_CD"),
+                    ("SKOR ÇARPANI", "20 saniyeliğine x2 skor kazan.", "SKOR_CARPANI")
+                ]
+                
+                random.shuffle(guclendirmeler_listesi)
+                
+                guclendirme_butonlari = []
+                buton_y_pos_list = [EKRAN_YUKSEKLIK/2, EKRAN_YUKSEKLIK/2 + 120, EKRAN_YUKSEKLIK/2 + 240]
+                
+                for i in range(3):
+                    metin, aciklama, tip = guclendirmeler_listesi[i]
+                    buton = GuclendirmeButonu(EKRAN_GENISLIK / 2, buton_y_pos_list[i], metin, aciklama, tip)
+                    guclendirme_butonlari.append(buton)
+            
+            # --- Sandık Açma Ekranı
+            if sandik_acma_modu:
+                ekran.fill(RENK_SIYAH)
+                metin_ciz(ekran, "GÜÇLENDİRME SANDIĞI", FONT_ORTA, EKRAN_GENISLIK/2, EKRAN_YUKSEKLIK/4, RENK_SARI_ALTIN)
+                metin_ciz(ekran, "Bir güçlendirme seç!", FONT_KUCUK, EKRAN_GENISLIK/2, EKRAN_YUKSEKLIK/4 + 60, RENK_BEYAZ)
+                
+                sandik_sprite.draw(ekran)
+                for buton in guclendirme_butonlari:
+                    buton.ciz(ekran)
+                
+                pygame.display.flip()
+
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        pygame.quit()
+                        sys.exit()
+                    if event.type == pygame.MOUSEBUTTONDOWN:
+                        if global_click_sound:
+                            global_click_sound.play()
+                        for buton in guclendirme_butonlari:
+                            if buton.rect.collidepoint(event.pos):
+                                if buton.tip == "MAX_CAN":
+                                    oyuncu.max_can += 50
+                                    oyuncu.can = oyuncu.max_can
+                                elif buton.tip == "HIZ":
+                                    oyuncu.hiz_x += 2
+                                elif buton.tip == "ATES_HIZI":
+                                    oyuncu.ates_gecikmesi = max(50, oyuncu.ates_gecikmesi - 50)
+                                elif buton.tip == "EKSTRA_HASAR":
+                                    oyuncu.ekstra_hasar += 1
+                                elif buton.tip == "DUSMAN_YAVASLATMA":
+                                    for d in dusmanlar:
+                                        d.yavasla(10000)
+                                elif buton.tip == "YETENEK_CD":
+                                    oyuncu.yetenek_cd_azaltma = min(10000, oyuncu.yetenek_cd_azaltma + 2000)
+                                elif buton.tip == "SKOR_CARPANI":
+                                    oyuncu.skor_carpani_al()
+                                sandik_acma_modu = False
+                                # Sandık açma modu bittiğinde müziği devam ettir
+                                if pygame.mixer.music.get_busy():
+                                     pygame.mixer.music.unpause()
+                                break
+                continue
+
+            # --- Duraklatma Modu
+            if oyun_durdu:
+                # Oyun duraklatıldığında müziği duraklat
+                if pygame.mixer.music.get_busy():
+                    pygame.mixer.music.pause()
+                
+                rekor_skor = rekor_oku()
+                devam_et_butonu, ana_menu_butonu = menu_goster(ekran, skor, rekor_skor)
+                pygame.display.flip()
+                
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        pygame.quit()
+                        sys.exit()
+                    if event.type == pygame.MOUSEBUTTONDOWN:
+                        if global_click_sound:
+                            global_click_sound.play()
+                        if devam_et_butonu.collidepoint(event.pos):
+                            oyun_durdu = False
+                            # Oyun devam ettiğinde müziği devam ettir
+                            pygame.mixer.music.unpause()
+                        if ana_menu_butonu.collidepoint(event.pos):
+                            oyun_ici_dongu = False
+                            # Ana menüye dönerken müziği tamamen durdur
+                            pygame.mixer.music.stop()
+                    if event.type == pygame.KEYDOWN and event.key == pygame.K_p:
+                        if global_click_sound:
+                            global_click_sound.play()
+                        oyun_durdu = False
+                        # Oyun devam ettiğinde müziği devam ettir
+                        pygame.mixer.music.unpause()
+                continue
+            
+            # Eğer oyun duraklatılmamışsa ve müzik çalmıyorsa (daha önce duraklatıldıysa), devam ettir
+            if not pygame.mixer.music.get_busy() and not oyun_durdu and os.path.exists(MUSIC_FILE):
+                pygame.mixer.music.unpause()
+
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_p:
+                        if global_click_sound:
+                            global_click_sound.play()
+                        oyun_durdu = not oyun_durdu
+                        # Eğer oyun duraklatıldıysa müziği duraklat, değilse devam ettir
+                        if oyun_durdu:
+                            pygame.mixer.music.pause()
+                        else:
+                            pygame.mixer.music.unpause()
+
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if PAUSE_BUTON.collidepoint(event.pos):
+                        if global_click_sound:
+                            global_click_sound.play()
+                        oyun_durdu = not oyun_durdu
+                        # Eğer oyun duraklatıldıysa müziği duraklat, değilse devam ettir
+                        if oyun_durdu:
+                            pygame.mixer.music.pause()
+                        else:
+                            pygame.mixer.music.unpause()
+
+                    else:
+                        yeni_nesneler = None
+                        if ATES_TOHUMU_BUTON.collidepoint(event.pos):
+                            if global_click_sound:
+                                global_click_sound.play()
+                            yeni_nesneler = oyuncu.yetenek_kullan("ATES_TOHUMU")
+                        elif ELEKTRIK_BUTON.collidepoint(event.pos):
+                            if global_click_sound:
+                                global_click_sound.play()
+                            yeni_nesneler = oyuncu.yetenek_kullan("ELEKTRIK")
+                        elif GULLE_BUTON.collidepoint(event.pos):
+                            if global_click_sound:
+                                global_click_sound.play()
+                            yeni_nesneler = oyuncu.yetenek_kullan("GULLE")
+                        elif EJDER_BUTON.collidepoint(event.pos):
+                            if global_click_sound:
+                                global_click_sound.play()
+                            yeni_nesneler = oyuncu.yetenek_kullan("EJDER")
+                        elif KALKAN_BUTON.collidepoint(event.pos):
+                            if global_click_sound:
+                                global_click_sound.play()
+                            yeni_nesneler = oyuncu.yetenek_kullan("KALKAN")
+                        elif KAPAN_BUTON.collidepoint(event.pos):
+                            if global_click_sound:
+                                global_click_sound.play()
+                            yeni_nesneler = oyuncu.yetenek_kullan("KAPAN")
+                        elif ULTI_BUTON.collidepoint(event.pos):
+                            if global_click_sound:
+                                global_click_sound.play()
+                            yeni_nesneler = oyuncu.yetenek_kullan("ULTI")
+                        
+                        if yeni_nesneler:
+                            for n in yeni_nesneler:
+                                tum_spritelar.add(n)
+                                if isinstance(n, EjderCagrisi):
+                                    ejder_cagrilari.add(n)
+                                elif isinstance(n, Barikat):
+                                    barikatlar.add(n)
+                                elif isinstance(n, Kapan):
+                                    kapanlar.add(n)
+                                elif isinstance(n, IşıkÇağlayanı):
+                                    ulti_efektleri.add(n)
+
+            yeni_mermiler = None
+            if any(pygame.mouse.get_pressed()) and not any(btn.collidepoint(pygame.mouse.get_pos()) for btn in [ATES_TOHUMU_BUTON, ELEKTRIK_BUTON, GULLE_BUTON, EJDER_BUTON, KALKAN_BUTON, KAPAN_BUTON, ULTI_BUTON, PAUSE_BUTON]):
+                yeni_mermiler = oyuncu.ates_et()
+            if pygame.key.get_pressed()[pygame.K_SPACE]:
+                yeni_mermiler = oyuncu.ates_et()
+            
+            if yeni_mermiler:
+                tum_spritelar.add(yeni_mermiler)
+                mermiler.add(yeni_mermiler)
+            
+            tum_spritelar.update()
+            
+            for dusman in dusmanlar:
+                if isinstance(dusman, Goz):
+                    mermiler_goz = dusman.ates_et()
+                    if mermiler_goz:
+                        tum_spritelar.add(mermiler_goz)
+                        dusman_mermileri.add(mermiler_goz)
+
+            while len(dusmanlar) < DUSMAN_MAX_SAYISI:
+                yeni_d = yeni_dusman_yarat(skor, oyuncu, gargoyle_sayaci, goblin_sayaci, tum_spritelar)
+                if yeni_d:
+                    tum_spritelar.add(yeni_d)
+                    dusmanlar.add(yeni_d)
+                    if isinstance(yeni_d, KoruyucuGargoyle):
+                        gargoyle_sayaci += 1
+                    if isinstance(yeni_d, EttenDuvarGoblin):
+                        goblin_sayaci += 1
+            
+            düşmanlar_yok_edilecek = set()
+
+            vuruslar = pygame.sprite.groupcollide(dusmanlar, mermiler, False, True)
+            for dusman, carpan_mermiler in vuruslar.items():
+                if dusman.vurul(sum(m.hasar for m in carpan_mermiler)):
+                    düşmanlar_yok_edilecek.add(dusman)
+            
+            # EJDER ÇAĞRISI HASAR DÜZELTMESİ BURADA
+            vuruslar_ejder = pygame.sprite.groupcollide(dusmanlar, ejder_cagrilari, False, False)
+            for dusman, carpan_ejderler in vuruslar_ejder.items():
+                # Ejder çağrılarının hasarını topluyoruz. Birden fazla ejderha aynı anda vurursa diye.
+                if dusman.vurul(sum(e.hasar for e in carpan_ejderler)):
+                    düşmanlar_yok_edilecek.add(dusman)
+            
+            for dusman in pygame.sprite.groupcollide(dusmanlar, kapanlar, False, True):
+                if dusman.vurul(KAPAN_HASARI):
+                    düşmanlar_yok_edilecek.add(dusman)
+            
+            for dusman in pygame.sprite.groupcollide(dusmanlar, ulti_efektleri, False, False):
+                if dusman.vurul(IşıkÇağlayanı().hasar):
+                    düşmanlar_yok_edilecek.add(dusman)
+
+            for dusman in düşmanlar_yok_edilecek:
+                if dusman.alive():
+                    # Patlama sesini çal
+                    if global_explosion_sound:
+                        global_explosion_sound.play()
+
+                    kazanilan_skor = (50 + dusman.seviye * 10) * (2 if oyuncu.skor_carpani_aktif else 1)
+                    skor += kazanilan_skor
+                    tum_spritelar.add(Patlama(dusman.rect.center, 1.2))
+                    
+                    if isinstance(dusman, KoruyucuGargoyle):
+                        gargoyle_sayaci -= 1
+                        gargoyle_oldurme_sayaci += 1
+                        if gargoyle_oldurme_sayaci >= 13:
+                            kalp = Kalp(dusman.rect.center)
+                            tum_spritelar.add(kalp)
+                            kalpler.add(kalp)
+                            gargoyle_oldurme_sayaci = 0
+                    elif isinstance(dusman, EttenDuvarGoblin):
+                        goblin_sayaci -= 1
+                    elif isinstance(dusman, Goz) and random.random() < KILIC_DUSME_ORANI:
+                        kilic = Kilic(dusman.rect.center)
+                        tum_spritelar.add(kilic)
+                        kiliclar.add(kilic)
+                    
+                    if random.random() < KALP_DUSME_ORANI:
+                        kalp = Kalp(dusman.rect.center)
+                        tum_spritelar.add(kalp)
+                        kalpler.add(kalp)
+                    elif random.random() < KALKAN_DUSME_ORANI:
+                        gucup = GucUp(dusman.rect.center, 'KALKAN')
+                        tum_spritelar.add(gucup)
+                        guc_uplar.add(gucup)
+                    elif random.random() < GUCUP_DUSME_ORANI:
+                        gucup = GucUp(dusman.rect.center, 'GUC')
+                        tum_spritelar.add(gucup)
+                        guc_uplar.add(gucup)
+                    
+                    dusman.kill()
+            
+            for barikat, vuran_dusmanlar in pygame.sprite.groupcollide(barikatlar, dusmanlar, False, True).items():
+                if barikat.hasar_al(vuran_dusmanlar[0]):
+                    tum_spritelar.add(Patlama(barikat.rect.center))
+            
+            for barikat, vuran_mermiler in pygame.sprite.groupcollide(barikatlar, dusman_mermileri, False, True).items():
+                if barikat.hasar_al(vuran_mermiler[0]):
+                    tum_spritelar.add(Patlama(barikat.rect.center))
+
+            if oyuncu.can > 0:
+                carpan_dusmanlar = pygame.sprite.spritecollide(oyuncu, dusmanlar, True, pygame.sprite.collide_circle)
+                if carpan_dusmanlar:
+                    oyuncu.hasar_al(sum(d.hasar for d in carpan_dusmanlar))
+                    ekran_titreme_sayaci = 5
+                
+                carpan_mermiler = pygame.sprite.spritecollide(oyuncu, dusman_mermileri, True, pygame.sprite.collide_circle)
+                if carpan_mermiler:
+                    oyuncu.hasar_al(sum(m.hasar for m in carpan_mermiler))
+                    ekran_titreme_sayaci = 5
+
+            for gucup in pygame.sprite.spritecollide(oyuncu, guc_uplar, True):
+                if gucup.tip == 'GUC':
+                    oyuncu.guc_al()
+                elif gucup.tip == 'KALKAN':
+                    yeni_barikat = Barikat(oyuncu.rect)
+                    tum_spritelar.add(yeni_barikat)
+                    barikatlar.add(yeni_barikat)
+            
+            if pygame.sprite.spritecollide(oyuncu, kalpler, True):
+                oyuncu.can_yenile(CAN_DOLUM_ORANI)
+            
+            if pygame.sprite.spritecollide(oyuncu, kiliclar, True):
+                oyuncu.kilic_al()
+            
+            if oyuncu.can <= 0:
+                # Ekleme: Oyuncu ölünce game over sesini çal
+                if global_game_over_sound:
+                    global_game_over_sound.play()
+
+                oyun_bitti_ekrani_goster(skor)
+                oyun_ici_dongu = False
+                continue
+
+            ekran.fill(RENK_SIYAH)
+            render_offset = [random.randint(-8, 8), random.randint(-8, 8)] if ekran_titreme_sayaci > 0 else [0,0]
+            if ekran_titreme_sayaci > 0:
+                ekran_titreme_sayaci -= 1
+
+            for sprite in tum_spritelar:
+                ekran.blit(sprite.image, sprite.rect.move(render_offset))
+            
+            arayuz_ciz(skor, oyuncu)
+            pygame.display.flip()
+
+if __name__ == '__main__':
+    ana_dongu()
