@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kings of the Level - HTML5</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Times New Roman', serif;
+            overflow: hidden;
+        }
+        canvas {
+            background-color: #000;
+            display: block;
+        }
+        #ui-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* UI elemanlarının fare olaylarını engellememesi için */
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+    // =============================================================================
+    // OYUN AYARLARI VE SABİTLER
+    // =============================================================================
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Ekran Boyutları (Tarayıcı penceresine göre ayarlanacak)
+    let EKRAN_GENISLIK = window.innerWidth;
+    let EKRAN_YUKSEKLIK = window.innerHeight;
+    canvas.width = EKRAN_GENISLIK;
+    canvas.height = EKRAN_YUKSEKLIK;
+
+    window.addEventListener('resize', () => {
+        EKRAN_GENISLIK = window.innerWidth;
+        EKRAN_YUKSEKLIK = window.innerHeight;
+        canvas.width = EKRAN_GENISLIK;
+        canvas.height = EKRAN_YUKSEKLIK;
+        // Buton konumlarını yeniden hesapla
+        recalculateButtonLayout();
+    });
+
+    // Rekor anahtarı
+    const REKOR_ANAHTAR = "rekor_skor_html";
+
+    // Müzik ve Ses Ayarları
+    // NOT: Yerel dosyalar tarayıcıda çalışmaz. Bunların çalışması için bir web sunucusunda barındırılması gerekir.
+    // const backgroundMusic = new Audio("muzik/background_music.mp3");
+    // const explosionSound = new Audio("sesler/explosion.mp3");
+    // const damageSound = new Audio("sesler/damage_sound.mp3");
+    // const clickSound = new Audio("sesler/click_sound.mp3");
+    // const gameOverSound = new Audio("sesler/game_over.mp3");
+
+    // Renkler (CSS formatında)
+    const RENK_SIYAH = 'rgb(0, 0, 0)';
+    const RENK_BEYAZ = 'rgb(255, 255, 255)';
+    const RENK_SARI_ALTIN = 'rgb(255, 215, 0)';
+    const RENK_ACIK_SARI = 'rgb(255, 255, 224)';
+    const RENK_EJDER_YESIL = 'rgb(34, 139, 34)';
+    const RENK_KIRMIZI = 'rgb(220, 20, 60)';
+    const RENK_ATES_PORTAKAL = 'rgb(255, 140, 0)';
+    const RENK_ATES_SARI = 'rgb(255, 255, 0)';
+    const RENK_ELEKTRIK_MAVI = 'rgb(0, 191, 255)';
+    const RENK_YESIL = 'rgb(0, 200, 0)';
+    const RENK_GRI_ZIRH = 'rgb(192, 192, 192)';
+    const RENK_GRI_KOYU = 'rgb(105, 105, 105)';
+    const RENK_HAYALET = 'rgba(220, 230, 255, 0.78)';
+    const RENK_HAYALET_KOYU = 'rgb(119, 136, 153)';
+    const RENK_GULLE = 'rgb(40, 40, 40)';
+    const RENK_KALKAN_MAVI = 'rgb(0, 230, 230)';
+    const RENK_TURKUAZ_BARIKAT = 'rgb(64, 224, 208)';
+    const RENK_MOR_KAPAN = 'rgb(128, 0, 128)';
+    const RENK_ULTI_ISIK = 'rgba(255, 255, 150, 0.5)';
+    const RENK_KALP = 'rgb(255, 20, 147)';
+    const RENK_KILIC = 'rgb(220, 220, 220)';
+    const RENK_KRAL_SARI = 'rgb(255, 215, 0)';
+    const RENK_KEDI_TURUNCU = 'rgb(255, 165, 0)';
+    const RENK_BUZ_MAVI = 'rgb(173, 216, 230)';
+    const RENK_GOZ = 'rgb(227, 52, 47)';
+    const RENK_GOZ_IRIS = 'rgb(255, 204, 0)';
+    const RENK_GUCLENDIRME_YESIL = 'rgb(124, 252, 0)';
+    const RENK_THE_KINGS_ALTIN = 'rgb(255, 215, 0)';
+    const RENK_THE_KINGS_KIRMIZI = 'rgb(255, 0, 0)';
+    
+    // Oyun FPS
+    const FPS = 60;
+
+    // Oyuncu Ayarları
+    const OYUNCU_HIZ = 7;
+    const OYUNCU_CAN = 100;
+    const OYUNCU_ATES_GECIKMESI = 500;
+    const CAN_DOLUM_ORANI = OYUNCU_CAN / 4;
+
+    // Mermi Ayarları
+    const MERMI_HIZ = 10;
+
+    // Düşman Ayarları
+    const DUSMAN_MAX_SAYISI = 30;
+    const DUSMAN_SEVIYE_ATLAMA_SKORU = 2500;
+    
+    // Güçlendirme Ayarları
+    const GUCUP_DUSME_ORANI = 0.02;
+    const KALKAN_DUSME_ORANI = 0.005;
+    const KALP_DUSME_ORANI = 0.001;
+    const KILIC_DUSME_ORANI = 0.05;
+    const GUCUP_SURE = 5000;
+    const KILIC_SURESI = 10000;
+    
+    // Sandık Ayarları
+    const SANDIK_ACMA_ARALIGI = 5000;
+
+    // Yetenek Ayarları
+    const YETENEK_SURESI = 7000;
+    const YETENEK_BEKLEME_SURESI = 20000;
+    const EJDER_BEKLEME_SURESI = 30000;
+    const ULTI_BEKLEME_SURESI = 70000;
+    const KAPAN_BEKLEME_SURESI = 15000;
+    
+    // Kalkan Ayarları
+    const KALKAN_CAN = 3;
+    const KALKAN_SURESI = 10000;
+    
+    // UI Ayarları
+    let BUTON_BOYUTU = Math.min(65, EKRAN_GENISLIK / 12);
+    let BUTON_Y_KONUMU = EKRAN_YUKSEKLIK - BUTON_BOYUTU - 20;
+    let BUTON_ARALIK = 15;
+    let BUTON_BASLANGIC_X = EKRAN_GENISLIK - (BUTON_BOYUTU + BUTON_ARALIK) * 7;
+    
+    let ATES_TOHUMU_BUTON, ELEKTRIK_BUTON, GULLE_BUTON, EJDER_BUTON, KALKAN_BUTON, KAPAN_BUTON, ULTI_BUTON, PAUSE_BUTON;
+
+    function recalculateButtonLayout() {
+        BUTON_BOYUTU = Math.min(65, EKRAN_GENISLIK / 12);
+        BUTON_Y_KONUMU = EKRAN_YUKSEKLIK - BUTON_BOYUTU - 20;
+        BUTON_ARALIK = 15;
+        const totalButtonWidth = (BUTON_BOYUTU + BUTON_ARALIK) * 7 - BUTON_ARALIK;
+        BUTON_BASLANGIC_X = (EKRAN_GENISLIK - totalButtonWidth) / 2;
+
+        ATES_TOHUMU_BUTON = { x: BUTON_BASLANGIC_X, y: BUTON_Y_KONUMU, width: BUTON_BOYUTU, height: BUTON_BOYUTU };
+        ELEKTRIK_BUTON = { x: BUTON_BASLANGIC_X + (BUTON_BOYUTU + BUTON_ARALIK) * 1, y: BUTON_Y_KONUMU, width: BUTON_BOYUTU, height: BUTON_BOYUTU };
+        GULLE_BUTON = { x: BUTON_BASLANGIC_X + (BUTON_BOYUTU + BUTON_ARALIK) * 2, y: BUTON_Y_KONUMU, width: BUTON_BOYUTU, height: BUTON_BOYUTU };
+        EJDER_BUTON = { x: BUTON_BASLANGIC_X + (BUTON_BOYUTU + BUTON_ARALIK) * 3, y: BUTON_Y_KONUMU, width: BUTON_BOYUTU, height: BUTON_BOYUTU };
+        KALKAN_BUTON = { x: BUTON_BASLANGIC_X + (BUTON_BOYUTU + BUTON_ARALIK) * 4, y: BUTON_Y_KONUMU, width: BUTON_BOYUTU, height: BUTON_BOYUTU };
+        KAPAN_BUTON = { x: BUTON_BASLANGIC_X + (BUTON_BOYUTU + BUTON_ARALIK) * 5, y: BUTON_Y_KONUMU, width: BUTON_BOYUTU, height: BUTON_BOYUTU };
+        ULTI_BUTON = { x: BUTON_BASLANGIC_X + (BUTON_BOYUTU + BUTON_ARALIK) * 6, y: BUTON_Y_KONUMU, width: BUTON_BOYUTU, height: BUTON_BOYUTU };
+        PAUSE_BUTON = { x: EKRAN_GENISLIK - 160, y: 10, width: 150, height: 40 };
+    }
+    recalculateButtonLayout();
+
+
+    // =============================================================================
+    // YARDIMCI FONKSİYONLAR
+    // =============================================================================
+    function metin_ciz(metin, x, y, renk = RENK_BEYAZ, fontBoyutu = 40, align = 'center') {
+        ctx.font = `${fontBoyutu}px 'Times New Roman'`;
+        ctx.fillStyle = renk;
+        ctx.textAlign = align;
+        ctx.fillText(metin, x, y);
+    }
+
+    function can_bari_ciz(x, y, yuzde, bar_uzunluk = 100, bar_yukseklik = 10, renk = RENK_YESIL) {
+        yuzde = Math.max(0, Math.min(100, yuzde));
+        let dolum = (yuzde / 100) * bar_uzunluk;
+        
+        ctx.fillStyle = renk;
+        ctx.fillRect(x, y, dolum, bar_yukseklik);
+        
+        ctx.strokeStyle = RENK_BEYAZ;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, bar_uzunluk, bar_yukseklik);
+    }
+    
+    function isPointInRect(point, rect) {
+        return point.x >= rect.x && point.x <= rect.x + rect.width &&
+               point.y >= rect.y && point.y <= rect.y + rect.height;
+    }
+
+    // =============================================================================
+    // SINIFLAR
+    // =============================================================================
+    class Varlik {
+        constructor(x, y, genislik, yukseklik, can) {
+            this.x = x;
+            this.y = y;
+            this.width = genislik;
+            this.height = yukseklik;
+            this.can = can;
+            this.max_can = can;
+            this.hiz_x = 0;
+            this.hiz_y = 0;
+            this.aktif = true;
+            this.flashSuresi = 0;
+        }
+
+        update() {
+            this.x += this.hiz_x;
+            this.y += this.hiz_y;
+            if (this.flashSuresi > 0) this.flashSuresi--;
+        }
+
+        draw() {
+            // Temel çizim metodu, alt sınıflar tarafından override edilecek
+        }
+
+        vurul(hasar) {
+            this.can -= hasar;
+            this.flashSuresi = 10; // 10 frame boyunca beyaz yanıp sön
+            if (this.can <= 0) {
+                this.aktif = false;
+            }
+        }
+    }
+    
+    class Oyuncu extends Varlik {
+        constructor() {
+            super(EKRAN_GENISLIK / 2, EKRAN_YUKSEKLIK - 70, 50, 60, OYUNCU_CAN);
+            this.skin_adi = "IŞIK ŞÖVALYESİ";
+            this.ates_gecikmesi = OYUNCU_ATES_GECIKMESI;
+            this.son_ates = 0;
+            this.guc_aktif = false;
+            this.gucup_bitis_zamani = 0;
+            this.kilic_aktif = false;
+            this.kilic_bitis_zamani = 0;
+            this.ekstra_hasar = 0;
+            this.skor_carpani_aktif = false;
+            this.skor_carpani_sure = 0;
+            this.skor_carpani_baslangic_zamani = 0;
+
+            this.yetenek_aktif = "YOK";
+            this.yetenek_bitis_zamani = 0;
+            this.yetenek_cd_azaltma = 0;
+            
+            this.ates_tohumu_cd_bitis = 0;
+            this.elektrik_cd_bitis = 0;
+            this.gulle_cd_bitis = 0;
+            this.ejder_cd_bitis = 0;
+            this.kalkan_cd_bitis = 0;
+            this.kapan_cd_bitis = 0;
+            this.ulti_cd_bitis = 0;
+        }
+
+        update() {
+            const simdiki_zaman = Date.now();
+            
+            // Güçlendirmelerin süresini kontrol et
+            if (this.guc_aktif && simdiki_zaman > this.gucup_bitis_zamani) this.guc_aktif = false;
+            if (this.kilic_aktif && simdiki_zaman > this.kilic_bitis_zamani) this.kilic_aktif = false;
+            if (this.yetenek_aktif !== "YOK" && simdiki_zaman > this.yetenek_bitis_zamani) this.yetenek_aktif = "YOK";
+            if (this.skor_carpani_aktif && simdiki_zaman - this.skor_carpani_baslangic_zamani > this.skor_carpani_sure) this.skor_carpani_aktif = false;
+
+            // Hareket
+            this.hiz_x = 0;
+            if (keysPressed['ArrowLeft'] || keysPressed['a']) this.hiz_x = -OYUNCU_HIZ;
+            if (keysPressed['ArrowRight'] || keysPressed['d']) this.hiz_x = OYUNCU_HIZ;
+            
+            if(mouse.isDown && !isMouseOnAnyButton()) {
+                 if (mouse.x < this.x + this.width/2 - 5) this.hiz_x = -OYUNCU_HIZ;
+                 else if (mouse.x > this.x + this.width/2 + 5) this.hiz_x = OYUNCU_HIZ;
+            }
+
+            this.x += this.hiz_x;
+
+            // Ekran sınırları
+            if (this.x < 0) this.x = 0;
+            if (this.x + this.width > EKRAN_GENISLIK) this.x = EKRAN_GENISLIK - this.width;
+
+            super.update();
+        }
+        
+        ates_et() {
+            const simdiki_zaman = Date.now();
+            let ates_hizi = this.ates_gecikmesi;
+            if (this.guc_aktif) ates_hizi = 100;
+            else if (this.yetenek_aktif === "ATES_TOHUMU") ates_hizi = 350;
+            else if (this.yetenek_aktif === "ELEKTRIK") ates_hizi = 100;
+            else if (this.yetenek_aktif === "GULLE") ates_hizi = 800;
+
+            if (simdiki_zaman - this.son_ates > ates_hizi) {
+                this.son_ates = simdiki_zaman;
+                let yeni_mermiler = [];
+                
+                if (this.yetenek_aktif === "ATES_TOHUMU") yeni_mermiler.push(new AtesTohumu(this.x + this.width/2, this.y));
+                else if (this.yetenek_aktif === "ELEKTRIK") yeni_mermiler.push(new Elektrik(this.x + this.width/2, this.y));
+                else if (this.yetenek_aktif === "GULLE") yeni_mermiler.push(new Gulle(this.x + this.width/2, this.y));
+                else yeni_mermiler.push(new IsikOku(this.x + this.width/2, this.y, this.skin_adi, this.ekstra_hasar));
+
+                if (this.guc_aktif) {
+                    yeni_mermiler.push(new IsikOku(this.x, this.y + this.height/2, this.skin_adi, this.ekstra_hasar));
+                    yeni_mermiler.push(new IsikOku(this.x + this.width, this.y + this.height/2, this.skin_adi, this.ekstra_hasar));
+                }
+                return yeni_mermiler;
+            }
+            return null;
+        }
+        
+        yetenek_kullan(yetenek_turu, anlik_nesneler) {
+            const simdiki_zaman = Date.now();
+            const yetenek_bekleme = YETENEK_BEKLEME_SURESI - this.yetenek_cd_azaltma;
+            const ejder_bekleme = EJDER_BEKLEME_SURESI - this.yetenek_cd_azaltma;
+            const kapan_bekleme = KAPAN_BEKLEME_SURESI - this.yetenek_cd_azaltma;
+            const ulti_bekleme = ULTI_BEKLEME_SURESI - this.yetenek_cd_azaltma;
+
+            if (yetenek_turu === "ATES_TOHUMU" && simdiki_zaman > this.ates_tohumu_cd_bitis) {
+                this.yetenek_aktif = "ATES_TOHUMU";
+                this.yetenek_bitis_zamani = simdiki_zaman + YETENEK_SURESI;
+                this.ates_tohumu_cd_bitis = simdiki_zaman + yetenek_bekleme;
+            } else if (yetenek_turu === "ELEKTRIK" && simdiki_zaman > this.elektrik_cd_bitis) {
+                this.yetenek_aktif = "ELEKTRIK";
+                this.yetenek_bitis_zamani = simdiki_zaman + YETENEK_SURESI;
+                this.elektrik_cd_bitis = simdiki_zaman + yetenek_bekleme;
+            } else if (yetenek_turu === "GULLE" && simdiki_zaman > this.gulle_cd_bitis) {
+                this.yetenek_aktif = "GULLE";
+                this.yetenek_bitis_zamani = simdiki_zaman + YETENEK_SURESI;
+                this.gulle_cd_bitis = simdiki_zaman + yetenek_bekleme;
+            } else if (yetenek_turu === "EJDER" && simdiki_zaman > this.ejder_cd_bitis) {
+                this.ejder_cd_bitis = simdiki_zaman + ejder_bekleme;
+                anlik_nesneler.ejder_cagrilari.push(new EjderCagrisi(this.x + this.width / 2));
+            } else if (yetenek_turu === "KALKAN" && simdiki_zaman > this.kalkan_cd_bitis) {
+                this.kalkan_cd_bitis = simdiki_zaman + yetenek_bekleme;
+                anlik_nesneler.barikatlar.push(new Barikat(this));
+            } else if (yetenek_turu === "KAPAN" && simdiki_zaman > this.kapan_cd_bitis) {
+                this.kapan_cd_bitis = simdiki_zaman + kapan_bekleme;
+                anlik_nesneler.kapanlar.push(new Kapan(this));
+            } else if (yetenek_turu === "ULTI" && simdiki_zaman > this.ulti_cd_bitis) {
+                this.ulti_cd_bitis = simdiki_zaman + ulti_bekleme;
+                anlik_nesneler.ulti_efektleri.push(new IsikCaglayani());
+            }
+        }
+        
+        skin_sec(skin_adi) {
+            this.skin_adi = skin_adi;
+        }
+
+        draw() {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            
+            if (this.flashSuresi > 0 && this.flashSuresi % 4 < 2) {
+                // Darbe efektini daha belirgin yapmak için beyaz bir filtre uygulayabiliriz
+                ctx.filter = 'brightness(2)';
+            }
+            
+            // Farklı skinler için çizim mantığı
+            if (this.skin_adi === "ATEŞ ŞÖVALYESİ") {
+                ctx.fillStyle = RENK_ATES_PORTAKAL; ctx.fillRect(10, 20, 30, 30);
+                ctx.strokeStyle = RENK_ATES_SARI; ctx.lineWidth = 2; ctx.strokeRect(10, 20, 30, 30);
+                ctx.beginPath(); ctx.moveTo(15, 22); ctx.lineTo(35, 22); ctx.lineTo(40, 15); ctx.lineTo(25, 5); ctx.lineTo(10, 15); ctx.closePath(); ctx.fill();
+                ctx.fillStyle = RENK_SIYAH; ctx.fillRect(18, 15, 14, 5);
+            } else if (this.skin_adi === "GÖLGE ŞÖVALYESİ") {
+                 ctx.fillStyle = RENK_GRI_KOYU; ctx.fillRect(10, 20, 30, 30);
+                 ctx.strokeStyle = RENK_SIYAH; ctx.lineWidth = 2; ctx.strokeRect(10, 20, 30, 30);
+                 ctx.beginPath(); ctx.moveTo(15, 22); ctx.lineTo(35, 22); ctx.lineTo(40, 15); ctx.lineTo(25, 5); ctx.lineTo(10, 15); ctx.closePath(); ctx.fill();
+            } else { // Varsayılan IŞIK ŞÖVALYESİ
+                ctx.fillStyle = RENK_GRI_ZIRH; ctx.fillRect(10, 20, 30, 30);
+                ctx.strokeStyle = RENK_SARI_ALTIN; ctx.lineWidth = 2; ctx.strokeRect(10, 20, 30, 30);
+                ctx.beginPath(); ctx.moveTo(15, 22); ctx.lineTo(35, 22); ctx.lineTo(40, 15); ctx.lineTo(25, 5); ctx.lineTo(10, 15); ctx.closePath(); ctx.fill();
+                ctx.fillStyle = RENK_SIYAH; ctx.fillRect(18, 15, 14, 5);
+                ctx.fillStyle = RENK_SARI_ALTIN;
+                ctx.beginPath(); ctx.moveTo(25, 5); ctx.lineTo(22, 0); ctx.lineTo(28, 0); ctx.closePath(); ctx.fill();
+            }
+
+            if(this.kilic_aktif){
+                ctx.strokeStyle = RENK_KILIC;
+                ctx.lineWidth = 5;
+                ctx.beginPath();
+                ctx.moveTo(this.width/2, this.height);
+                ctx.lineTo(this.width/2 - 10, this.height - 30);
+                ctx.lineTo(this.width/2 + 10, this.height - 30);
+                ctx.stroke();
+            }
+
+            ctx.restore();
+        }
+        
+        guc_al() {
+            this.guc_aktif = true;
+            this.gucup_bitis_zamani = Date.now() + GUCUP_SURE;
+        }
+        kilic_al() {
+            this.kilic_aktif = true;
+            this.kilic_bitis_zamani = Date.now() + KILIC_SURESI;
+        }
+        skor_carpani_al() {
+            this.skor_carpani_aktif = true;
+            this.skor_carpani_baslangic_zamani = Date.now();
+            this.skor_carpani_sure = 20000;
+        }
+        can_yenile(miktar) {
+            this.can = Math.min(this.max_can, this.can + miktar);
+        }
+    }
+    
+    class Mermi extends Varlik {
+        constructor(x, y, genislik, yukseklik, hasar) {
+            super(x - genislik / 2, y, genislik, yukseklik, 1);
+            this.hasar = hasar;
+        }
+        update() {
+            super.update();
+            if (this.y + this.height < 0) this.aktif = false;
+        }
+    }
+
+    class IsikOku extends Mermi {
+        constructor(x, y, oyuncu_skin, ekstra_hasar=0) {
+            super(x, y, 10, 22, 1 + ekstra_hasar);
+            this.hiz_y = -MERMI_HIZ;
+            this.skin = oyuncu_skin;
+            // Skin'e göre hasar ve hız ayarları
+            if(oyuncu_skin === "ATEŞ ŞÖVALYESİ") { this.hasar=3; this.hiz_y = -MERMI_HIZ * 0.7;}
+            if(oyuncu_skin === "GÖLGE ŞÖVALYESİ") { this.hasar=10; this.hiz_y = -MERMI_HIZ * 0.5;}
+            // Diğer skinler için benzer ayarlamalar eklenebilir
+        }
+        draw() {
+             ctx.save();
+             ctx.translate(this.x, this.y);
+             ctx.fillStyle = RENK_SARI_ALTIN;
+             ctx.beginPath();
+             ctx.moveTo(5, 0); ctx.lineTo(10, 8); ctx.lineTo(6, 8);
+             ctx.lineTo(6, 22); ctx.lineTo(4, 22); ctx.lineTo(4, 8);
+             ctx.lineTo(0, 8); ctx.closePath(); ctx.fill();
+             ctx.restore();
+        }
+    }
+
+    class AtesTohumu extends Mermi {
+        constructor(x, y) {
+            super(x, y, 24, 24, 3);
+            this.hiz_y = -MERMI_HIZ * 0.7;
+        }
+        draw() {
+            ctx.fillStyle = RENK_ATES_PORTAKAL;
+            ctx.beginPath(); ctx.arc(this.x, this.y, 12, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = RENK_ATES_SARI;
+            ctx.beginPath(); ctx.arc(this.x, this.y, 7, 0, Math.PI * 2); ctx.fill();
+        }
+    }
+
+    class Elektrik extends Mermi {
+        constructor(x, y) {
+            super(x, y, 15, 30, 2);
+            this.hiz_y = -MERMI_HIZ * 1.5;
+        }
+        draw() {
+            ctx.strokeStyle = RENK_ELEKTRIK_MAVI;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(this.x, this.y); ctx.lineTo(this.x + 5, this.y + 10);
+            ctx.lineTo(this.x - 2, this.y + 12); ctx.lineTo(this.x + 3, this.y + 20);
+            ctx.lineTo(this.x, this.y + 30);
+            ctx.stroke();
+        }
+    }
+
+    class Gulle extends Mermi {
+        constructor(x, y) {
+            super(x, y, 40, 40, 10);
+            this.hiz_y = -MERMI_HIZ * 0.5;
+        }
+        draw() {
+            ctx.fillStyle = RENK_GULLE;
+            ctx.beginPath(); ctx.arc(this.x, this.y, 20, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = RENK_GRI_KOYU;
+            ctx.lineWidth = 3;
+            ctx.stroke();
+        }
+    }
+
+    class Dusman extends Varlik {
+        constructor(skor) {
+            const boyut = 35;
+            super(Math.random() * (EKRAN_GENISLIK - boyut), -100, boyut, 45, 1 + Math.floor(skor/DUSMAN_SEVIYE_ATLAMA_SKORU));
+            this.seviye = Math.floor(skor/DUSMAN_SEVIYE_ATLAMA_SKORU);
+            this.hasar = 25 + this.seviye * 5;
+            this.hiz_y = Math.random() * 4 + 2;
+            this.hiz_x = Math.random() * 4 - 2;
+        }
+
+        update() {
+            super.update();
+            if (this.y > EKRAN_YUKSEKLIK) this.aktif = false;
+        }
+        
+        draw() {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            if (this.flashSuresi > 0 && this.flashSuresi % 4 < 2) {
+                 ctx.filter = 'brightness(2)';
+            }
+            ctx.fillStyle = RENK_HAYALET;
+            ctx.beginPath();
+            const boyut_x = this.width;
+            const boyut_y = this.height;
+            ctx.moveTo(boyut_x/2, 0); ctx.lineTo(boyut_x, boyut_y*0.8);
+            ctx.lineTo(boyut_x*0.8, boyut_y); ctx.lineTo(boyut_x/2, boyut_y*0.7);
+            ctx.lineTo(boyut_x*0.2, boyut_y); ctx.lineTo(0, boyut_y*0.8);
+            ctx.closePath();
+            ctx.fill();
+            
+            ctx.fillStyle = RENK_KIRMIZI;
+            ctx.beginPath();
+            ctx.arc(boyut_x*0.35, boyut_y*0.4, boyut_x*0.1, 0, Math.PI*2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(boyut_x*0.65, boyut_y*0.4, boyut_x*0.1, 0, Math.PI*2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+    }
+    
+    // Diğer Düşman ve Güçlendirme Sınıfları da benzer şekilde eklenebilir...
+    class EjderCagrisi {
+        constructor(x) {
+            this.x = x;
+            this.y = EKRAN_YUKSEKLIK;
+            this.width = 150;
+            this.height = 150;
+            this.hiz_y = -20;
+            this.hasar = 100;
+            this.aktif = true;
+        }
+        update() {
+            this.y += this.hiz_y;
+            if (this.y + this.height < 0) this.aktif = false;
+        }
+        draw() {
+            ctx.fillStyle = RENK_EJDER_YESIL;
+            ctx.beginPath();
+            ctx.ellipse(this.x, this.y, 40, 60, 0, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+    
+    class Barikat {
+        constructor(oyuncu) {
+            this.width = oyuncu.width * 3.5;
+            this.height = 30;
+            this.x = oyuncu.x + oyuncu.width/2 - this.width/2;
+            this.y = oyuncu.y - this.height - 10;
+            this.can = KALKAN_CAN;
+            this.max_can = KALKAN_CAN;
+            this.olusturma_zamani = Date.now();
+            this.aktif = true;
+        }
+        hasar_al() {
+            this.can--;
+            if (this.can <= 0) this.aktif = false;
+        }
+        update() {
+            if (Date.now() - this.olusturma_zamani > KALKAN_SURESI) {
+                this.aktif = false;
+            }
+        }
+        draw() {
+            ctx.save();
+            ctx.globalAlpha = this.can / this.max_can;
+            ctx.fillStyle = RENK_KALKAN_MAVI;
+            ctx.fillRect(this.x, this.y + 5, this.width, this.height - 10);
+            ctx.strokeStyle = RENK_TURKUAZ_BARIKAT;
+            ctx.lineWidth = 3;
+            ctx.strokeRect(this.x + 5, this.y, this.width - 10, this.height);
+            ctx.restore();
+        }
+    }
+    
+    class Kapan {
+        constructor(oyuncu){
+            this.size = 60;
+            this.x = oyuncu.x + oyuncu.width/2 - this.size/2;
+            this.y = oyuncu.y + oyuncu.height/2 - this.size/2;
+            this.hasar = 1000;
+            this.aktif = true;
+        }
+        update(){}
+        draw(){
+            ctx.strokeStyle = RENK_GRI_KOYU;
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.arc(this.x + this.size/2, this.y + this.size/2, this.size/2, 0, Math.PI*2);
+            ctx.stroke();
+            ctx.fillStyle = RENK_MOR_KAPAN;
+            ctx.beginPath();
+            ctx.arc(this.x + this.size/2, this.y + this.size/2, 10, 0, Math.PI*2);
+            ctx.fill();
+        }
+    }
+
+    class IsikCaglayani {
+        constructor(){
+            this.hasar = 100;
+            this.olusturma_zamani = Date.now();
+            this.suresi = 1000;
+            this.aktif = true;
+        }
+        update() {
+            if (Date.now() - this.olusturma_zamani > this.suresi) {
+                this.aktif = false;
+            }
+        }
+        draw() {
+            const gecen_zaman = Date.now() - this.olusturma_zamani;
+            ctx.save();
+            ctx.globalAlpha = 1.0 - (gecen_zaman / this.suresi);
+            ctx.fillStyle = RENK_ULTI_ISIK;
+            ctx.fillRect(0,0, EKRAN_GENISLIK, EKRAN_YUKSEKLIK);
+            ctx.restore();
+        }
+    }
+    
+    class Guclendirme {
+        constructor(x, y, tip) {
+            this.x = x;
+            this.y = y;
+            this.size = 30;
+            this.hiz_y = 4;
+            this.tip = tip; // 'GUC', 'KALKAN', 'KALP', 'KILIC'
+            this.aktif = true;
+        }
+        update() {
+            this.y += this.hiz_y;
+            if (this.y > EKRAN_YUKSEKLIK) this.aktif = false;
+        }
+        draw() {
+            ctx.fillStyle = RENK_ELEKTRIK_MAVI;
+            if(this.tip === 'KALKAN') ctx.fillStyle = RENK_KALKAN_MAVI;
+            if(this.tip === 'KALP') ctx.fillStyle = RENK_KALP;
+            if(this.tip === 'KILIC') ctx.fillStyle = RENK_KILIC;
+            ctx.fillRect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
+        }
+    }
+    
+    class Patlama {
+        constructor(x, y) {
+            this.x = x;
+            this.y = y;
+            this.frame = 0;
+            this.animasyon_hizi = 4;
+            this.frame_sayaci = 0;
+            this.aktif = true;
+        }
+        update() {
+            this.frame_sayaci++;
+            if(this.frame_sayaci > this.animasyon_hizi){
+                this.frame++;
+                this.frame_sayaci = 0;
+            }
+            if(this.frame >= 10) this.aktif = false;
+        }
+        draw() {
+            const boyut = 10 + this.frame * 5;
+            ctx.fillStyle = RENK_ACIK_SARI;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, boyut, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+    
+    class Sandik {
+         constructor(x, y){
+             this.x = x;
+             this.y = y;
+             this.width = 80;
+             this.height = 80;
+         }
+         draw(){
+            ctx.fillStyle = 'rgb(139, 69, 19)';
+            ctx.fillRect(this.x-30, this.y-25, 60, 50);
+            ctx.fillStyle = 'rgb(184, 134, 11)';
+            ctx.fillRect(this.x-35, this.y-30, 70, 10);
+            ctx.fillStyle = 'rgb(255, 215, 0)';
+            ctx.fillRect(this.x-5, this.y, 10, 10);
+         }
+    }
+    
+    class GuclendirmeButonu {
+        constructor(x, y, metin, aciklama, tip) {
+            this.x = x - 150;
+            this.y = y - 50;
+            this.width = 300;
+            this.height = 100;
+            this.metin = metin;
+            this.aciklama = aciklama;
+            this.tip = tip;
+            this.renk = 'gray';
+            if (tip === "MAX_CAN") this.renk = RENK_KALP;
+            else if (tip === "HIZ") this.renk = RENK_ELEKTRIK_MAVI;
+            // Diğer renkler eklenebilir
+        }
+        draw() {
+            ctx.fillStyle = this.renk;
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+            metin_ciz(this.metin, this.x + this.width/2, this.y + 40, RENK_BEYAZ, 24);
+            metin_ciz(this.aciklama, this.x + this.width/2, this.y + 70, RENK_SIYAH, 18);
+        }
+    }
+
+
+    // =============================================================================
+    // OYUN YÖNETİMİ
+    // =============================================================================
+    let oyuncu;
+    let dusmanlar = [];
+    let mermiler = [];
+    let guc_uplar = [];
+    let patlamalar = [];
+    let anlik_nesneler = {
+        ejder_cagrilari: [],
+        barikatlar: [],
+        kapanlar: [],
+        ulti_efektleri: []
+    };
+    
+    let skor = 0;
+    let rekor_skor = 0;
+    let gameState = 'START_SCREEN'; // START_SCREEN, SKIN_SELECT, PLAYING, PAUSED, GAME_OVER, SANDIK
+    let lastTime = 0;
+    
+    let sandik;
+    let guclendirme_butonlari = [];
+    let son_sandik_skoru = 0;
+
+    // Kontroller
+    const keysPressed = {};
+    const mouse = { x: 0, y: 0, isDown: false };
+
+    window.addEventListener('keydown', (e) => { keysPressed[e.code] = true; keysPressed[e.key] = true; });
+    window.addEventListener('keyup', (e) => { delete keysPressed[e.code]; delete keysPressed[e.key];});
+    canvas.addEventListener('mousedown', () => mouse.isDown = true);
+    canvas.addEventListener('mouseup', () => mouse.isDown = false);
+    canvas.addEventListener('mousemove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        mouse.x = e.clientX - rect.left;
+        mouse.y = e.clientY - rect.top;
+    });
+    canvas.addEventListener('touchstart', (e) => {
+        mouse.isDown = true;
+        const rect = canvas.getBoundingClientRect();
+        mouse.x = e.touches[0].clientX - rect.left;
+        mouse.y = e.touches[0].clientY - rect.top;
+        handleMouseClick(); // Dokunmayı da tıklama olarak ele al
+    });
+    canvas.addEventListener('touchend', () => mouse.isDown = false);
+    canvas.addEventListener('touchmove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        mouse.x = e.touches[0].clientX - rect.left;
+        mouse.y = e.touches[0].clientY - rect.top;
+    });
+
+
+    function rekor_oku() {
+        return parseInt(localStorage.getItem(REKOR_ANAHTAR) || "0");
+    }
+
+    function rekor_kaydet(yeni_skor) {
+        localStorage.setItem(REKOR_ANAHTAR, yeni_skor.toString());
+    }
+
+    function yeni_dusman_yarat() {
+        if (dusmanlar.length < DUSMAN_MAX_SAYISI) {
+            dusmanlar.push(new Dusman(skor));
+        }
+    }
+    
+    function resetGame() {
+        rekor_skor = rekor_oku();
+        oyuncu = new Oyuncu();
+        dusmanlar = [];
+        mermiler = [];
+        guc_uplar = [];
+        patlamalar = [];
+        anlik_nesneler = { ejder_cagrilari: [], barikatlar: [], kapanlar: [], ulti_efektleri: [] };
+        skor = 0;
+        son_sandik_skoru = 0;
+        for(let i = 0; i < DUSMAN_MAX_SAYISI / 2; i++) yeni_dusman_yarat();
+    }
+    
+    function isMouseOnAnyButton() {
+        const buttons = [ATES_TOHUMU_BUTON, ELEKTRIK_BUTON, GULLE_BUTON, EJDER_BUTON, KALKAN_BUTON, KAPAN_BUTON, ULTI_BUTON, PAUSE_BUTON];
+        return buttons.some(btn => isPointInRect(mouse, btn));
+    }
+
+
+    function handleMouseClick() {
+        // Tıklama sesi
+        // if(clickSound) clickSound.play();
+
+        if (gameState === 'PLAYING') {
+             const buttons = {
+                "ATES_TOHUMU": ATES_TOHUMU_BUTON, "ELEKTRIK": ELEKTRIK_BUTON,
+                "GULLE": GULLE_BUTON, "EJDER": EJDER_BUTON,
+                "KALKAN": KALKAN_BUTON, "KAPAN": KAPAN_BUTON, "ULTI": ULTI_BUTON
+            };
+            for(const [yetenek, rect] of Object.entries(buttons)){
+                if(isPointInRect(mouse, rect)){
+                    oyuncu.yetenek_kullan(yetenek, anlik_nesneler);
+                    return;
+                }
+            }
+            if(isPointInRect(mouse, PAUSE_BUTON)){
+                gameState = 'PAUSED';
+            }
+        } else if (gameState === 'PAUSED') {
+            const menu_x = EKRAN_GENISLIK/2 - 250;
+            const menu_y = EKRAN_YUKSEKLIK/2 - 175;
+            const devam_et_butonu = {x: menu_x + 100, y: menu_y + 220, width: 300, height: 50};
+            const ana_menu_butonu = {x: menu_x + 100, y: menu_y + 290, width: 300, height: 50};
+            if(isPointInRect(mouse, devam_et_butonu)) gameState = 'PLAYING';
+            if(isPointInRect(mouse, ana_menu_butonu)) gameState = 'START_SCREEN';
+        } else if (gameState === 'SANDIK') {
+            for(const buton of guclendirme_butonlari) {
+                if(isPointInRect(mouse, buton)){
+                    if (buton.tip === "MAX_CAN") { oyuncu.max_can += 50; oyuncu.can = oyuncu.max_can; }
+                    else if (buton.tip === "HIZ") { oyuncu.hiz_x += 2; } // Bu OYUNCU_HIZ sabitini etkilemeli
+                    else if (buton.tip === "ATES_HIZI") { oyuncu.ates_gecikmesi = Math.max(50, oyuncu.ates_gecikmesi - 50); }
+                    else if (buton.tip === "EKSTRA_HASAR") { oyuncu.ekstra_hasar += 1; }
+                    else if (buton.tip === "YETENEK_CD") { oyuncu.yetenek_cd_azaltma = Math.min(10000, oyuncu.yetenek_cd_azaltma + 2000); }
+                    else if (buton.tip === "SKOR_CARPANI") { oyuncu.skor_carpani_al(); }
+                    gameState = 'PLAYING';
+                    break;
+                }
+            }
+        }
+        else {
+             // START_SCREEN, SKIN_SELECT, GAME_OVER ekranları
+            gameState = (gameState === 'START_SCREEN' || gameState === 'GAME_OVER') ? 'SKIN_SELECT' : 'PLAYING';
+            if (gameState === 'PLAYING') {
+                 resetGame();
+                 oyuncu.skin_sec(skinler[secili_skin_index]);
+            }
+        }
+    }
+    
+    canvas.addEventListener('click', handleMouseClick);
+    
+    // Skin seçimi
+    const skinler = ["IŞIK ŞÖVALYESİ", "ATEŞ ŞÖVALYESİ", "GÖLGE ŞÖVALYESİ"]; // Diğer skinler skorla açılacak
+    let secili_skin_index = 0;
+
+
+    // =============================================================================
+    // ANA OYUN DÖNGÜSÜ
+    // =============================================================================
+    function gameLoop(timestamp) {
+        let deltaTime = timestamp - lastTime;
+        lastTime = timestamp;
+
+        // Ekranı temizle
+        ctx.fillStyle = RENK_SIYAH;
+        ctx.fillRect(0, 0, EKRAN_GENISLIK, EKRAN_YUKSEKLIK);
+
+        switch(gameState) {
+            case 'START_SCREEN':
+                drawStartScreen();
+                break;
+            case 'SKIN_SELECT':
+                handleSkinSelect();
+                drawSkinSelect();
+                break;
+            case 'PLAYING':
+                updateGame(deltaTime);
+                drawGame();
+                break;
+            case 'PAUSED':
+                drawGame(); // Arka planı çiz
+                drawPauseMenu();
+                break;
+            case 'GAME_OVER':
+                drawGameOver();
+                break;
+             case 'SANDIK':
+                drawGame(); // Arka planı çiz
+                drawSandikScreen();
+                break;
+        }
+
+        requestAnimationFrame(gameLoop);
+    }
+    
+    // --- GÜNCELLEME VE ÇİZİM FONKSİYONLARI ---
+
+    function updateGame(deltaTime) {
+        // Sandık kontrolü
+        if (skor > 0 && skor >= son_sandik_skoru + SANDIK_ACMA_ARALIGI) {
+            gameState = 'SANDIK';
+            son_sandik_skoru = Math.floor(skor / SANDIK_ACMA_ARALIGI) * SANDIK_ACMA_ARALIGI;
+            sandik = new Sandik(EKRAN_GENISLIK/2, EKRAN_YUKSEKLIK/2 - 150);
+            // Butonları oluştur
+            const guclendirmeler_listesi = [
+                {metin:"MAKSİMUM CAN", aciklama:"Canını 50 artırır.", tip:"MAX_CAN"},
+                {metin:"HIZ ARTIŞI", aciklama:"Hareket hızını artırır.", tip:"HIZ"},
+                {metin:"ATEŞ HIZI", aciklama:"Atış gecikmesini azaltır.", tip:"ATES_HIZI"},
+                {metin:"EKSTRA HASAR", aciklama:"Ok başına hasar ekler.", tip:"EKSTRA_HASAR"},
+                {metin:"YETENEK HIZLANDIRMA", aciklama:"Yetenek bekleme sürelerini kısaltır.", tip:"YETENEK_CD"},
+                {metin:"SKOR ÇARPANI", aciklama:"20 saniyeliğine x2 skor kazan.", tip:"SKOR_CARPANI"}
+            ].sort(() => 0.5 - Math.random());
+            
+            guclendirme_butonlari = [];
+            for(let i=0; i<3; i++){
+                const pos_y = EKRAN_YUKSEKLIK/2 + (i * 120);
+                guclendirme_butonlari.push(new GuclendirmeButonu(EKRAN_GENISLIK/2, pos_y, guclendirmeler_listesi[i].metin, guclendirmeler_listesi[i].aciklama, guclendirmeler_listesi[i].tip));
+            }
+
+            return; // Sandık ekranına geç, bu frame'de başka güncelleme yapma
+        }
+
+        // Oyuncu güncelleme
+        oyuncu.update();
+        if (keysPressed['Space'] || (mouse.isDown && !isMouseOnAnyButton())) {
+            const yeni_mermiler = oyuncu.ates_et();
+            if (yeni_mermiler) mermiler.push(...yeni_mermiler);
+        }
+
+        // Düşman, mermi, vb. güncelleme
+        [...dusmanlar, ...mermiler, ...guc_uplar, ...patlamalar, ...anlik_nesneler.ejder_cagrilari, ...anlik_nesneler.barikatlar, ...anlik_nesneler.kapanlar, ...anlik_nesneler.ulti_efektleri].forEach(obj => obj.update());
+        
+        // Çarpışma Kontrolü
+        // Mermi -> Düşman
+        mermiler.forEach(mermi => {
+            dusmanlar.forEach(dusman => {
+                if (mermi.aktif && dusman.aktif && checkCollision(mermi, dusman)) {
+                    mermi.aktif = false;
+                    dusman.vurul(mermi.hasar);
+                    if (!dusman.aktif) {
+                        handleEnemyDeath(dusman);
+                    }
+                }
+            });
+        });
+        // Diğer çarpışmalar (Ejder, Kapan, Ulti...)
+        [...anlik_nesneler.ejder_cagrilari, ...anlik_nesneler.kapanlar, ...anlik_nesneler.ulti_efektleri].forEach(yetenek => {
+            dusmanlar.forEach(dusman => {
+                 if(yetenek.aktif && dusman.aktif && checkCollision(yetenek, dusman)){
+                      if(yetenek instanceof Kapan) yetenek.aktif = false;
+                      dusman.vurul(yetenek.hasar);
+                      if(!dusman.aktif) handleEnemyDeath(dusman);
+                 }
+            });
+        });
+
+
+        // Düşman -> Oyuncu
+        dusmanlar.forEach(dusman => {
+            if (dusman.aktif && checkCollision(oyuncu, dusman)) {
+                dusman.aktif = false; // Çarpan düşman yok olsun
+                oyuncu.vurul(dusman.hasar);
+            }
+             // Oyuncu -> Barikat
+            anlik_nesneler.barikatlar.forEach(barikat => {
+                if(barikat.aktif && checkCollision(dusman, barikat)){
+                    dusman.aktif = false;
+                    barikat.hasar_al();
+                }
+            });
+        });
+        
+        // Oyuncu -> Güçlendirme
+        guc_uplar.forEach(guc => {
+            if(guc.aktif && checkCollision(oyuncu, guc)){
+                guc.aktif = false;
+                if(guc.tip === 'GUC') oyuncu.guc_al();
+                if(guc.tip === 'KALKAN') anlik_nesneler.barikatlar.push(new Barikat(oyuncu));
+                if(guc.tip === 'KALP') oyuncu.can_yenile(CAN_DOLUM_ORANI);
+                if(guc.tip === 'KILIC') oyuncu.kilic_al();
+            }
+        });
+
+        // Aktif olmayanları temizle
+        mermiler = mermiler.filter(m => m.aktif);
+        dusmanlar = dusmanlar.filter(d => d.aktif);
+        guc_uplar = guc_uplar.filter(g => g.aktif);
+        patlamalar = patlamalar.filter(p => p.aktif);
+        for(let key in anlik_nesneler){
+            anlik_nesneler[key] = anlik_nesneler[key].filter(item => item.aktif);
+        }
+
+        // Yeni düşman yarat
+        if (Math.random() < 0.02) {
+            yeni_dusman_yarat();
+        }
+        
+        // Oyun bitti mi?
+        if (oyuncu.can <= 0) {
+            if (skor > rekor_skor) {
+                rekor_kaydet(skor);
+            }
+            // if(gameOverSound) gameOverSound.play();
+            gameState = 'GAME_OVER';
+        }
+    }
+    
+    function handleEnemyDeath(dusman) {
+        // if(explosionSound) explosionSound.play();
+        patlamalar.push(new Patlama(dusman.x + dusman.width/2, dusman.y + dusman.height/2));
+        skor += (50 + dusman.seviye * 10) * (oyuncu.skor_carpani_aktif ? 2 : 1);
+
+        const rand = Math.random();
+        const merkez = {x: dusman.x + dusman.width/2, y: dusman.y + dusman.height/2};
+        if (rand < KALP_DUSME_ORANI) guc_uplar.push(new Guclendirme(merkez.x, merkez.y, 'KALP'));
+        else if (rand < KALKAN_DUSME_ORANI) guc_uplar.push(new Guclendirme(merkez.x, merkez.y, 'KALKAN'));
+        else if (rand < GUCUP_DUSME_ORANI) guc_uplar.push(new Guclendirme(merkez.x, merkez.y, 'GUC'));
+        else if (rand < GUCUP_DUSME_ORANI + KILIC_DUSME_ORANI) guc_uplar.push(new Guclendirme(merkez.x, merkez.y, 'KILIC'));
+    }
+
+    function checkCollision(obj1, obj2) {
+        // Basit AABB (Axis-Aligned Bounding Box) çarpışma kontrolü
+        return obj1.x < obj2.x + obj2.width &&
+               obj1.x + obj1.width > obj2.x &&
+               obj1.y < obj2.y + obj2.height &&
+               obj1.y + obj1.height > obj2.y;
+    }
+    
+    function drawGame() {
+        // Tüm nesneleri çiz
+        oyuncu.draw();
+        [...dusmanlar, ...mermiler, ...guc_uplar, ...patlamalar, ...anlik_nesneler.ejder_cagrilari, ...anlik_nesneler.barikatlar, ...anlik_nesneler.kapanlar, ...anlik_nesneler.ulti_efektleri].forEach(obj => obj.draw());
+        drawUI();
+    }
+    
+    function drawUI() {
+        // Skor, can barı, vb.
+        metin_ciz("SKOR: " + skor, EKRAN_GENISLIK / 2, 40, RENK_BEYAZ, 30);
+        metin_ciz("CAN:", 70, 40, RENK_BEYAZ, 24, 'right');
+        can_bari_ciz(80, 25, (oyuncu.can / oyuncu.max_can) * 100, 200, 20);
+        
+        if(oyuncu.guc_aktif) metin_ciz("GÜÇ AKTİF!", EKRAN_GENISLIK / 2, 70, RENK_ELEKTRIK_MAVI, 24);
+        if(oyuncu.kilic_aktif) metin_ciz("KILIÇ AKTİF!", EKRAN_GENISLIK / 2, 100, RENK_KILIC, 24);
+        if(oyuncu.skor_carpani_aktif){
+            const kalan_sure = Math.ceil((oyuncu.skor_carpani_sure - (Date.now() - oyuncu.skor_carpani_baslangic_zamani))/1000);
+            metin_ciz(`x2 SKOR! Kalan süre: ${kalan_sure}s`, EKRAN_GENISLIK / 2, 130, RENK_GUCLENDIRME_YESIL, 24);
+        }
+
+        // Yetenek Butonları
+        const simdiki_zaman = Date.now();
+        const butonlar = {
+            "T": { rect: ATES_TOHUMU_BUTON, cd_bitis: oyuncu.ates_tohumu_cd_bitis, toplam_cd: YETENEK_BEKLEME_SURESI, renk: RENK_ATES_PORTAKAL },
+            "E": { rect: ELEKTRIK_BUTON, cd_bitis: oyuncu.elektrik_cd_bitis, toplam_cd: YETENEK_BEKLEME_SURESI, renk: RENK_ELEKTRIK_MAVI },
+            "G": { rect: GULLE_BUTON, cd_bitis: oyuncu.gulle_cd_bitis, toplam_cd: YETENEK_BEKLEME_SURESI, renk: RENK_GULLE },
+            "D": { rect: EJDER_BUTON, cd_bitis: oyuncu.ejder_cd_bitis, toplam_cd: EJDER_BEKLEME_SURESI, renk: RENK_EJDER_YESIL },
+            "K": { rect: KALKAN_BUTON, cd_bitis: oyuncu.kalkan_cd_bitis, toplam_cd: YETENEK_BEKLEME_SURESI, renk: RENK_KALKAN_MAVI },
+            "A": { rect: KAPAN_BUTON, cd_bitis: oyuncu.kapan_cd_bitis, toplam_cd: KAPAN_BEKLEME_SURESI, renk: RENK_MOR_KAPAN },
+            "U": { rect: ULTI_BUTON, cd_bitis: oyuncu.ulti_cd_bitis, toplam_cd: ULTI_BEKLEME_SURESI, renk: RENK_ULTI_ISIK },
+        };
+        
+        for(const [harf, data] of Object.entries(butonlar)) {
+            const cd_kalan = data.cd_bitis - simdiki_zaman;
+            ctx.fillStyle = data.renk;
+            ctx.fillRect(data.rect.x, data.rect.y, data.rect.width, data.rect.height);
+            
+            if (cd_kalan > 0) {
+                const yuzde = cd_kalan / (data.toplam_cd - oyuncu.yetenek_cd_azaltma);
+                ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                ctx.fillRect(data.rect.x, data.rect.y, data.rect.width, data.rect.height * yuzde);
+                metin_ciz(Math.ceil(cd_kalan/1000), data.rect.x + data.rect.width/2, data.rect.y + data.rect.height/2 + 10, RENK_BEYAZ, 30);
+            } else {
+                 metin_ciz(harf, data.rect.x + data.rect.width/2, data.rect.y + data.rect.height/2 + 10, RENK_BEYAZ, 30);
+            }
+        }
+        
+        // Pause butonu
+        ctx.fillStyle = RENK_GRI_KOYU;
+        ctx.fillRect(PAUSE_BUTON.x, PAUSE_BUTON.y, PAUSE_BUTON.width, PAUSE_BUTON.height);
+        metin_ciz("DURAKLAT", PAUSE_BUTON.x + PAUSE_BUTON.width/2, PAUSE_BUTON.y + PAUSE_BUTON.height/2 + 8, RENK_BEYAZ, 24);
+    }
+    
+    function drawStartScreen() {
+        rekor_skor = rekor_oku();
+        metin_ciz("LİGHT KNİGHT HENRY", EKRAN_GENISLIK/2, EKRAN_YUKSEKLIK/4, RENK_SARI_ALTIN, 80);
+        metin_ciz("Işık Şövalyesi'nin Macerası", EKRAN_GENISLIK/2, EKRAN_YUKSEKLIK/2, RENK_BEYAZ, 40);
+        metin_ciz(`REKOR SKOR: ${rekor_skor}`, EKRAN_GENISLIK/2, EKRAN_YUKSEKLIK/2 + 60, RENK_BEYAZ, 24);
+        metin_ciz("Başlamak için dokun.", EKRAN_GENISLIK/2, EKRAN_YUKSEKLIK*3/4 + 60, RENK_BEYAZ, 24);
+    }
+
+    function drawSkinSelect() {
+        metin_ciz("SKİN SEÇİMİ", EKRAN_GENISLIK / 2, EKRAN_YUKSEKLIK / 4, RENK_SARI_ALTIN, 80);
+        
+        const secili_skin = skinler[secili_skin_index];
+        const temp_oyuncu = new Oyuncu();
+        temp_oyuncu.skin_sec(secili_skin);
+        temp_oyuncu.x = EKRAN_GENISLIK / 2 - temp_oyuncu.width / 2;
+        temp_oyuncu.y = EKRAN_YUKSEKLIK / 2 - temp_oyuncu.height / 2;
+        temp_oyuncu.draw();
+        
+        metin_ciz(secili_skin, EKRAN_GENISLIK / 2, EKRAN_YUKSEKLIK / 2 + 80, RENK_BEYAZ, 40);
+        
+        metin_ciz("<", EKRAN_GENISLIK / 2 - 250, EKRAN_YUKSEKLIK / 2, RENK_BEYAZ, 80);
+        metin_ciz(">", EKRAN_GENISLIK / 2 + 250, EKRAN_YUKSEKLIK / 2, RENK_BEYAZ, 80);
+        
+        metin_ciz("Seçmek ve başlamak için dokun.", EKRAN_GENISLIK / 2, EKRAN_YUKSEKLIK * 3 / 4, RENK_BEYAZ, 24);
+    }
+    
+    function handleSkinSelect() {
+        // Fare tıklaması ile skin değiştirme
+        const leftArrow = { x: EKRAN_GENISLIK/2 - 300, y: EKRAN_YUKSEKLIK/2 - 50, width: 100, height: 100};
+        const rightArrow = { x: EKRAN_GENISLIK/2 + 200, y: EKRAN_YUKSEKLIK/2 - 50, width: 100, height: 100};
+        
+        // Bu fonksiyon, tıklama olayı yerine sürekli kontrol edilecek şekilde yeniden düzenlenebilir,
+        // ancak şimdilik `handleMouseClick` içindeki gameState değişikliği yeterli.
+        // Klavye ile skin değiştirme
+        if(keysPressed['ArrowLeft']){
+             secili_skin_index = (secili_skin_index - 1 + skinler.length) % skinler.length;
+             delete keysPressed['ArrowLeft']; // Tek basışta bir skin atlasın
+        }
+        if(keysPressed['ArrowRight']){
+            secili_skin_index = (secili_skin_index + 1) % skinler.length;
+            delete keysPressed['ArrowRight'];
+        }
+        if(keysPressed['Enter'] || keysPressed[' ']){
+             gameState = 'PLAYING';
+             resetGame();
+             oyuncu.skin_sec(skinler[secili_skin_index]);
+             delete keysPressed['Enter'];
+             delete keysPressed[' '];
+        }
+    }
+
+    function drawPauseMenu() {
+        ctx.fillStyle = 'rgba(0,0,0,0.7)';
+        ctx.fillRect(0,0, EKRAN_GENISLIK, EKRAN_YUKSEKLIK);
+        
+        const menu_genislik = 500;
+        const menu_yukseklik = 350;
+        const menu_x = EKRAN_GENISLIK/2 - menu_genislik/2;
+        const menu_y = EKRAN_YUKSEKLIK/2 - menu_yukseklik/2;
+        
+        ctx.fillStyle = RENK_GRI_KOYU;
+        ctx.fillRect(menu_x, menu_y, menu_genislik, menu_yukseklik);
+        ctx.strokeStyle = RENK_SARI_ALTIN;
+        ctx.lineWidth = 5;
+        ctx.strokeRect(menu_x, menu_y, menu_genislik, menu_yukseklik);
+        
+        metin_ciz("DURAKLATILDI", EKRAN_GENISLIK/2, menu_y + 50, RENK_BEYAZ, 40);
+        metin_ciz(`Skor: ${skor}`, EKRAN_GENISLIK/2, menu_y + 130, RENK_SARI_ALTIN, 24);
+        metin_ciz(`Rekor: ${rekor_skor}`, EKRAN_GENISLIK/2, menu_y + 170, RENK_BEYAZ, 24);
+
+        // Devam Et Butonu
+        ctx.fillStyle = RENK_YESIL;
+        ctx.fillRect(menu_x + 100, menu_y + 220, 300, 50);
+        metin_ciz("Devam Et", EKRAN_GENISLIK/2, menu_y + 250, RENK_BEYAZ, 40);
+        
+        // Ana Menü Butonu
+        ctx.fillStyle = RENK_KIRMIZI;
+        ctx.fillRect(menu_x + 100, menu_y + 290, 300, 50);
+        metin_ciz("Ana Menü", EKRAN_GENISLIK/2, menu_y + 320, RENK_BEYAZ, 40);
+    }
+    
+    let gameOverTimer = 0;
+    function drawGameOver() {
+        if(gameOverTimer === 0) gameOverTimer = Date.now();
+        metin_ciz("OYUN BİTTİ", EKRAN_GENISLIK/2, EKRAN_YUKSEKLIK/4, RENK_KIRMIZI, 80);
+        metin_ciz(`SKOR: ${skor}`, EKRAN_GENISLIK/2, EKRAN_YUKSEKLIK/2, RENK_SARI_ALTIN, 40);
+        if (skor >= rekor_skor) {
+             metin_ciz("YENİ REKOR!", EKRAN_GENISLIK/2, EKRAN_YUKSEKLIK/2 + 60, RENK_ELEKTRIK_MAVI, 24);
+        }
+        metin_ciz(`REKOR: ${rekor_skor}`, EKRAN_GENISLIK/2, EKRAN_YUKSEKLIK/2 + 100, RENK_BEYAZ, 24);
+        metin_ciz("Menüye dönmek için dokun...", EKRAN_GENISLIK/2, EKRAN_YUKSEKLIK*3/4, RENK_BEYAZ, 24);
+        
+        if(Date.now() - gameOverTimer > 5000) {
+            gameState = 'START_SCREEN';
+            gameOverTimer = 0;
+        }
+    }
+    
+    function drawSandikScreen(){
+        ctx.fillStyle = 'rgba(0,0,0,0.8)';
+        ctx.fillRect(0,0, EKRAN_GENISLIK, EKRAN_YUKSEKLIK);
+        metin_ciz("GÜÇLENDİRME SANDIĞI", EKRAN_GENISLIK/2, EKRAN_YUKSEKLIK/4, RENK_SARI_ALTIN, 40);
+        metin_ciz("Bir güçlendirme seç!", EKRAN_GENISLIK/2, EKRAN_YUKSEKLIK/4 + 60, RENK_BEYAZ, 24);
+        sandik.draw();
+        guclendirme_butonlari.forEach(b => b.draw());
+    }
+
+    // Oyunu başlat
+    requestAnimationFrame(gameLoop);
+    </script>
+</body>
+</html>
